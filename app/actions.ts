@@ -31,3 +31,9 @@ export async function updatePaste(
   revalidatePath('/')
   redirect(`/${id}`)
 }
+
+export async function deletePaste(id: number) {
+  await prisma.codePaste.delete({ where: { id } })
+  revalidatePath('/')
+  redirect('/')
+}

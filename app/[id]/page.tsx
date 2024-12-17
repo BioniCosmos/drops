@@ -5,7 +5,8 @@ import { getLangName } from '@/lib/lang'
 import { format } from 'date-fns'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { updatePaste } from '../actions'
+import { deletePaste, updatePaste } from '../actions'
+import DeleteButton from './DeleteButton'
 
 export interface PastePageProps {
   params: Promise<{ id: string }>
@@ -87,6 +88,7 @@ export default async function PastePage({
               >
                 Edit
               </Link>
+              <DeleteButton action={deletePaste.bind(null, id)} />
             </div>
           </div>
           <CodePreview content={content} language={language} />
