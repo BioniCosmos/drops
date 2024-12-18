@@ -34,7 +34,7 @@ export default async function ListPage() {
               ({ id, title, content, language, createdAt, views }) => (
                 <Link
                   key={id}
-                  href={`/${id}`}
+                  href={`/view/${id}`}
                   className="block hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
                   <div className="p-6 space-y-4">

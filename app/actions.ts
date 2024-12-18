@@ -12,9 +12,10 @@ export async function createPaste(
   const { id } = await prisma.codePaste.create({
     data: { title: title || 'Untitled Paste', content, language },
   })
-  revalidatePath(`/${id}`)
+  revalidatePath(`/view/${id}`)
+  revalidatePath(`/edit/${id}`)
   revalidatePath('/list')
-  redirect(`/${id}`)
+  redirect(`/view/${id}`)
 }
 
 export async function updatePaste(
@@ -27,13 +28,16 @@ export async function updatePaste(
     where: { id },
     data: { title: title || 'Untitled Paste', content, language },
   })
-  revalidatePath(`/${id}`)
+  revalidatePath(`/view/${id}`)
+  revalidatePath(`/edit/${id}`)
   revalidatePath('/list')
-  redirect(`/${id}`)
+  redirect(`/view/${id}`)
 }
 
 export async function deletePaste(id: number) {
   await prisma.codePaste.delete({ where: { id } })
+  revalidatePath(`/view/${id}`)
+  revalidatePath(`/edit/${id}`)
   revalidatePath('/list')
   redirect('/list')
 }

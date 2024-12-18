@@ -1,57 +1,25 @@
+import { deletePaste } from '@/app/actions'
 import CodePreview from '@/components/CodePreview'
-import PasteEditor from '@/components/PasteEditor'
 import prisma from '@/lib/db'
 import { getLangName } from '@/lib/lang'
 import { format } from 'date-fns'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { deletePaste, updatePaste } from '../actions'
 import DeleteButton from './DeleteButton'
 
 export interface PastePageProps {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ edit?: '' }>
 }
 
-export default async function PastePage({
-  params,
-  searchParams,
-}: PastePageProps) {
+export async function generateStaticParams() {
+  const pastes = await prisma.codePaste.findMany()
+  return pastes.map(({ id }) => ({ id: String(id) }))
+}
+
+export default async function PastePage({ params }: PastePageProps) {
   const id = Number((await params).id)
-  {
-    const paste = await prisma.codePaste.findUnique({ where: { id } })
-    if (!paste) {
-      notFound()
-    }
-    const { edit } = await searchParams
-    if (edit !== undefined) {
-      return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-          <main className="container mx-auto px-4 py-8">
-            <div className="mb-6">
-              <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Edit Paste
-                </h1>
-                <Link
-                  href={`/${id}`}
-                  className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors"
-                >
-                  Cancel
-                </Link>
-              </div>
-            </div>
-            <PasteEditor
-              initialTitle={paste.title}
-              initialContent={paste.content}
-              initialLanguage={paste.language}
-              submitButtonText="Save Changes"
-              action={updatePaste.bind(null, id)}
-            />
-          </main>
-        </div>
-      )
-    }
+  if (!(await prisma.codePaste.findUnique({ where: { id } }))) {
+    notFound()
   }
   const { title, content, language, createdAt, views } =
     await prisma.codePaste.update({
@@ -83,7 +51,7 @@ export default async function PastePage({
                 New Paste
               </Link>
               <Link
-                href={`/${id}?edit`}
+                href={`/edit/${id}`}
                 className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Edit
