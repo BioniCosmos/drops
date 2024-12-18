@@ -1,6 +1,7 @@
-import { bundledLanguages, createHighlighter } from 'shiki'
+import { createHighlighter } from 'shiki'
+import { lang } from './lang'
 
 export const highlighter = await createHighlighter({
   themes: ['github-light', 'github-dark'],
-  langs: Object.keys(bundledLanguages),
+  langs: Object.values(lang).map(({ shikiAlias }) => shikiAlias),
 })
