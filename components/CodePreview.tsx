@@ -1,5 +1,5 @@
-import { highlighter } from '@/lib/highlighter'
 import { loadShikiLang } from '@/lib/lang'
+import { codeToHtml } from 'shiki'
 
 export interface CodePreviewProps {
   content: string
@@ -8,7 +8,7 @@ export interface CodePreviewProps {
   maxLines?: number
 }
 
-export default function CodePreview({
+export default async function CodePreview({
   content,
   language,
   preview = false,
@@ -17,7 +17,7 @@ export default function CodePreview({
   const displayContent = preview
     ? getContentPreview(content, maxLines)
     : content
-  const __html = highlighter.codeToHtml(displayContent, {
+  const __html = await codeToHtml(displayContent, {
     lang: loadShikiLang(language),
     themes: { light: 'github-light', dark: 'github-dark' },
   })
