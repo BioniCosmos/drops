@@ -3,8 +3,7 @@
 import { lang, loadCodeMirrorLang } from '@/lib/lang'
 import { useTheme } from '@/lib/utils'
 import CodeMirror from '@uiw/react-codemirror'
-import { FormEventHandler, useState } from 'react'
-import { useFormStatus } from 'react-dom'
+import { FormEventHandler, useState, useTransition } from 'react'
 
 export interface PasteEditorProps {
   initialTitle?: string
@@ -25,9 +24,10 @@ export default function PasteEditor({
   const [content, setContent] = useState(initialContent)
   const [language, setLanguage] = useState(initialLanguage)
 
+  const [pending, startTransition] = useTransition()
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault()
-    await action(title, content, language)
+    startTransition(() => action(title, content, language))
   }
 
   return (
@@ -67,21 +67,14 @@ export default function PasteEditor({
             className="h-full"
           />
         </div>
-        <SubmitButton text={submitButtonText} />
+        <button
+          type="submit"
+          disabled={pending}
+          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {pending ? 'Submitting...' : submitButtonText}
+        </button>
       </form>
     </main>
-  )
-}
-
-function SubmitButton({ text }: { text: string }) {
-  const { pending } = useFormStatus()
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      {pending ? 'Submitting...' : text}
-    </button>
   )
 }
