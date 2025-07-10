@@ -15,4 +15,25 @@ model CodePaste {
   language  String
   createdAt DateTime @default(now())
   views     Int      @default(0)
+  authorId  Int
+  isPublic  Boolean
+  author    User     @relation(fields: [authorId], references: [id])
+}
+
+model User {
+  id          Int         @id @default(autoincrement())
+  userId      String      @unique
+  githubId    String      @unique
+  username    String
+  isAnonymous Boolean
+  sessions    Session[]
+  pastes      CodePaste[]
+}
+
+model Session {
+  id             String   @id
+  secretHash     Bytes
+  userId         Int
+  lastVerifiedAt DateTime
+  user           User     @relation(fields: [userId], references: [id])
 }

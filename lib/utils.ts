@@ -1,14 +1,4 @@
-import { useEffect, useState } from 'react'
-
-export function useTheme() {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light')
-  useEffect(() => {
-    const media = window.matchMedia('(prefers-color-scheme: dark)')
-    setTheme(media.matches ? 'dark' : 'light')
-    const listener = (event: MediaQueryListEvent) =>
-      setTheme(event.matches ? 'dark' : 'light')
-    media.addEventListener('change', listener)
-    return () => media.removeEventListener('change', listener)
-  }, [])
-  return theme
-}
+export const second = 60
+export const minute = 60 * second
+export const hour = 60 * minute
+export const day = 24 * hour
