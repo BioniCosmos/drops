@@ -2,7 +2,7 @@ import { github } from '@/lib/server/oauth'
 import { minute } from '@/lib/utils'
 import { generateState } from 'arctic'
 import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { redirect } from 'next/navigation'
 
 export async function GET() {
   const state = generateState()
@@ -16,5 +16,5 @@ export async function GET() {
     maxAge: 10 * minute,
     sameSite: 'lax',
   })
-  return NextResponse.redirect(github().createAuthorizationURL(state, []))
+  redirect(github().createAuthorizationURL(state, []).href)
 }

@@ -21,13 +21,12 @@ model CodePaste {
 }
 
 model User {
-  id          Int         @id @default(autoincrement())
-  userId      String      @unique
-  githubId    String      @unique
-  username    String
-  isAnonymous Boolean
-  sessions    Session[]
-  pastes      CodePaste[]
+  id       Int         @id @default(autoincrement())
+  userId   String      @unique
+  githubId String      @unique
+  username String
+  sessions Session[]
+  pastes   CodePaste[]
 }
 
 model Session {

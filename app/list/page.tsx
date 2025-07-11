@@ -1,6 +1,6 @@
 import CodePreview from '@/components/CodePreview'
-import prisma from '@/lib/db'
 import { getLangName } from '@/lib/lang'
+import prisma from '@/lib/server/db'
 import { format } from 'date-fns'
 import Link from 'next/link'
 
@@ -61,12 +61,12 @@ export default async function ListPage() {
                 </Link>
               ),
             )}
-            {pastes.length === 0 && (
-              <div className="p-6 text-center text-gray-500 dark:text-gray-400">
-                No pastes found. Be the first to create one!
-              </div>
-            )}
           </div>
+          {pastes.length === 0 && (
+            <div className="p-6 text-center text-gray-500 dark:text-gray-400">
+              No pastes found. Be the first to create one!
+            </div>
+          )}
         </div>
       </main>
     </div>

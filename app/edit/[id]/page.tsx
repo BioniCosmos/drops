@@ -1,6 +1,6 @@
 import { updatePaste } from '@/app/actions'
 import PasteEditor from '@/components/PasteEditor'
-import prisma from '@/lib/db'
+import prisma from '@/lib/server/db'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 

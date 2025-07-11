@@ -1,7 +1,7 @@
 import { deletePaste } from '@/app/actions'
 import CodePreview from '@/components/CodePreview'
-import prisma from '@/lib/db'
 import { getLangName } from '@/lib/lang'
+import prisma from '@/lib/server/db'
 import { format } from 'date-fns'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'

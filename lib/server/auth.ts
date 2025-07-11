@@ -2,7 +2,7 @@ import { nanoid } from 'nanoid'
 import { cookies } from 'next/headers'
 import { cache } from 'react'
 import { ulid } from 'ulid'
-import { day, minute } from '../utils'
+import { day, minute, year } from '../utils'
 import prisma from './db'
 
 export async function createSession(userId: number) {
@@ -16,12 +16,20 @@ export async function createSession(userId: number) {
       lastVerifiedAt: new Date(),
     },
   })
-  await refreshSessionCookie(`${id}.${secret}`)
+  const cookieStore = await cookies()
+  cookieStore.set({
+    name: 'session',
+    value: `${id}.${secret}`,
+    maxAge: year,
+    path: '/',
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+  })
 }
 
 export async function deleteSession(sessionId?: string) {
+  const cookieStore = await cookies()
   if (!sessionId) {
-    const cookieStore = await cookies()
     const token = cookieStore.get('session')?.value
     if (!token) {
       return
@@ -30,20 +38,7 @@ export async function deleteSession(sessionId?: string) {
     sessionId = id
   }
   await prisma.session.delete({ where: { id: sessionId } })
-  const cookieStore = await cookies()
   cookieStore.delete('session')
-}
-
-export async function refreshSessionCookie(token: string) {
-  const cookieStore = await cookies()
-  cookieStore.set({
-    name: 'session',
-    value: token,
-    maxAge: 10 * day,
-    path: '/',
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-  })
 }
 
 export const getCurrentSession = cache(async () => {
@@ -83,7 +78,6 @@ async function validateSessionToken(token: string) {
       where: { id },
       data: { lastVerifiedAt: now },
     })
-    await refreshSessionCookie(token)
   }
   return session
 }

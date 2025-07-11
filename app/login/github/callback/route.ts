@@ -3,14 +3,16 @@ import prisma from '@/lib/server/db'
 import { github } from '@/lib/server/oauth'
 import { OAuth2RequestError } from 'arctic'
 import ky from 'ky'
-import { NextRequest, NextResponse } from 'next/server'
+import { isRedirectError } from 'next/dist/client/components/redirect-error'
+import { redirect } from 'next/navigation'
+import { NextRequest } from 'next/server'
 
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get('code')
   const state = req.nextUrl.searchParams.get('state')
   const storedState = req.cookies.get('github_oauth_state')?.value
   if (!code || !state || !storedState || state !== storedState) {
-    return new NextResponse(null, { status: 400 })
+    return new Response('invalid state or code', { status: 400 })
   }
   try {
     const tokens = await github().validateAuthorizationCode(code)
@@ -20,25 +22,24 @@ export async function GET(req: NextRequest) {
     const existingUser = await prisma.user.findUnique({
       where: { githubId: login },
     })
-    if (existingUser) {
-      await createSession(existingUser.id)
-    } else {
-      const user = await prisma.user.create({
-        data: {
-          userId: login,
-          githubId: login,
-          username: name,
-          isAnonymous: false,
-        },
-      })
-      await createSession(user.id)
-    }
-    return NextResponse.redirect('/')
+    const userId = existingUser
+      ? existingUser.id
+      : await prisma.user
+          .create({
+            data: { userId: login, githubId: login, username: name },
+          })
+          .then(({ id }) => id)
+    await createSession(userId)
+    req.cookies.delete('github_oauth_state')
+    redirect('/')
   } catch (e) {
-    console.error(e)
-    if (e instanceof OAuth2RequestError) {
-      return new Response(null, { status: 400 })
+    if (isRedirectError(e)) {
+      throw e
     }
-    return new NextResponse(null, { status: 500 })
+    if (e instanceof OAuth2RequestError) {
+      return new Response(e.message, { status: 400 })
+    }
+    console.error(e)
+    return new Response(null, { status: 500 })
   }
 }
