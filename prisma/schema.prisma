@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["omitApi"]
 }
 
 datasource db {
@@ -9,16 +10,17 @@ datasource db {
 }
 
 model CodePaste {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String
-  language  String
-  createdAt DateTime @default(now())
-  views     Int      @default(0)
-  authorId  Int
-  isPublic  Boolean
-  slug      String   @unique
-  author    User     @relation(fields: [authorId], references: [id])
+  id           Int      @id @default(autoincrement())
+  title        String
+  content      String
+  language     String
+  createdAt    DateTime @default(now())
+  views        Int      @default(0)
+  authorId     Int?
+  isPublic     Boolean
+  slug         String   @unique
+  anonymousKey String   @unique
+  author       User?    @relation(fields: [authorId], references: [id])
 }
 
 model User {

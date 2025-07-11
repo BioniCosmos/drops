@@ -1,11 +1,11 @@
-import { deletePaste } from '@/app/actions'
 import CodePreview from '@/components/CodePreview'
-import DeleteButton from '@/components/DeleteButton'
 import { getLangName } from '@/lib/lang'
+import { getCurrentSession } from '@/lib/server/auth'
 import prisma from '@/lib/server/db'
 import { format } from 'date-fns'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import WriteOperations from './WriteOperations'
 
 export interface PastePageProps {
   params: Promise<{ slug: string }>
@@ -25,6 +25,7 @@ export default async function PastePage({ params }: PastePageProps) {
       where: { slug },
       data: { views: { increment: 1 } },
     })
+  const { user } = await getCurrentSession()
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <main className="container mx-auto px-4 py-8">
@@ -49,16 +50,7 @@ export default async function PastePage({ params }: PastePageProps) {
               >
                 New Paste
               </Link>
-              <Link
-                href={`/edit/${slug}`}
-                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Edit
-              </Link>
-              <DeleteButton
-                action={deletePaste.bind(null, slug)}
-                className="px-4 py-2 text-sm rounded-lg"
-              />
+              <WriteOperations slug={slug} user={user} />
             </div>
           </div>
           <CodePreview content={content} language={language} />

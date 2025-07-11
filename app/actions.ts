@@ -13,40 +13,37 @@ export async function createPaste(
   isPublic: boolean,
 ) {
   const { user } = await getCurrentSession()
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
+  const anonymousKey = nanoid()
   const slug = nanoid()
   await prisma.codePaste.create({
     data: {
       title: title || 'Untitled Paste',
       content,
       language,
-      authorId: user.id,
+      authorId: user?.id,
       isPublic,
       slug,
+      anonymousKey,
     },
   })
   revalidatePath(`/view/${slug}`)
   revalidatePath(`/edit/${slug}`)
   revalidatePath('/list')
   revalidatePath('/admin')
-  redirect(`/view/${slug}`)
+  return { type: user ? 'owned' : 'anonymous', slug, anonymousKey }
 }
 
 export async function updatePaste(
   slug: string,
+  anonymousKey: string,
   title: string,
   content: string,
   language: string,
   isPublic: boolean,
 ) {
   const { user } = await getCurrentSession()
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
   const paste = await prisma.codePaste.findUnique({ where: { slug } })
-  if (!paste || paste.authorId !== user.id) {
+  if (paste?.authorId !== user?.id && paste?.anonymousKey !== anonymousKey) {
     throw new Error('Forbidden')
   }
   await prisma.codePaste.update({
@@ -60,13 +57,10 @@ export async function updatePaste(
   redirect(`/view/${slug}`)
 }
 
-export async function deletePaste(slug: string) {
+export async function deletePaste(slug: string, anonymousKey: string) {
   const { user } = await getCurrentSession()
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
   const paste = await prisma.codePaste.findUnique({ where: { slug } })
-  if (!paste || paste.authorId !== user.id) {
+  if (paste?.authorId !== user?.id && paste?.anonymousKey !== anonymousKey) {
     throw new Error('Forbidden')
   }
   await prisma.codePaste.delete({ where: { slug } })
@@ -74,4 +68,12 @@ export async function deletePaste(slug: string) {
   revalidatePath(`/edit/${slug}`)
   revalidatePath('/list')
   revalidatePath('/admin')
+}
+
+export async function verifyAnonymousPaste(slug: string, anonymousKey: string) {
+  const paste = await prisma.codePaste.findUnique({
+    where: { slug },
+    select: { anonymousKey: true },
+  })
+  return paste?.anonymousKey === anonymousKey
 }
