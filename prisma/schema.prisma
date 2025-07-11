@@ -17,6 +17,7 @@ model CodePaste {
   views     Int      @default(0)
   authorId  Int
   isPublic  Boolean
+  slug      String   @unique
   author    User     @relation(fields: [authorId], references: [id])
 }
 

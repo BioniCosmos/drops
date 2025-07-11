@@ -6,6 +6,7 @@ import Link from 'next/link'
 
 export default async function ListPage() {
   const pastes = await prisma.codePaste.findMany({
+    where: { isPublic: true },
     orderBy: { createdAt: 'desc' },
   })
 
@@ -31,10 +32,10 @@ export default async function ListPage() {
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg divide-y divide-gray-200 dark:divide-gray-700">
             {pastes.map(
-              ({ id, title, content, language, createdAt, views }) => (
+              ({ id, title, content, language, createdAt, views, slug }) => (
                 <Link
                   key={id}
-                  href={`/view/${id}`}
+                  href={`/view/${slug}`}
                   className="block hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
                   <div className="p-6 space-y-4">

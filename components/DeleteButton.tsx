@@ -1,12 +1,14 @@
 'use client'
 
+import { clsx } from 'clsx'
 import { MouseEventHandler, useTransition } from 'react'
 
 export interface DeleteButtonProps {
   action: () => Promise<void>
+  className?: string
 }
 
-export default function DeleteButton({ action }: DeleteButtonProps) {
+export default function DeleteButton({ action, className }: DeleteButtonProps) {
   const [pending, startTransition] = useTransition()
   const handleDelete: MouseEventHandler<HTMLButtonElement> = async (e) => {
     e.preventDefault()
@@ -22,7 +24,10 @@ export default function DeleteButton({ action }: DeleteButtonProps) {
   return (
     <button
       disabled={pending}
-      className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      className={clsx(
+        'bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors',
+        className,
+      )}
       onClick={handleDelete}
     >
       {pending ? 'Deleting...' : 'Delete'}

@@ -1,3 +1,4 @@
+import DeleteButton from '@/components/DeleteButton'
 import { getLangName } from '@/lib/lang'
 import { getCurrentSession } from '@/lib/server/auth'
 import prisma from '@/lib/server/db'
@@ -42,7 +43,7 @@ export default async function AdminPage() {
                 className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
               >
                 <div className="space-y-1">
-                  <Link href={`/view/${paste.id}`}>
+                  <Link href={`/view/${paste.slug}`}>
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white hover:underline">
                       {paste.title}
                     </h2>
@@ -59,19 +60,15 @@ export default async function AdminPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Link
-                    href={`/edit/${paste.id}`}
+                    href={`/edit/${paste.slug}`}
                     className="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                   >
                     Edit
                   </Link>
-                  <form action={deletePaste.bind(null, paste.id)}>
-                    <button
-                      type="submit"
-                      className="px-3 py-1 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                    >
-                      Delete
-                    </button>
-                  </form>
+                  <DeleteButton
+                    action={deletePaste.bind(null, paste.slug)}
+                    className="px-3 py-1 text-sm rounded-lg"
+                  />
                 </div>
               </div>
             ))}

@@ -1,29 +1,28 @@
 import { deletePaste } from '@/app/actions'
 import CodePreview from '@/components/CodePreview'
+import DeleteButton from '@/components/DeleteButton'
 import { getLangName } from '@/lib/lang'
 import prisma from '@/lib/server/db'
 import { format } from 'date-fns'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import DeleteButton from './DeleteButton'
 
 export interface PastePageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ slug: string }>
 }
 
 export async function generateStaticParams() {
-  const pastes = await prisma.codePaste.findMany()
-  return pastes.map(({ id }) => ({ id: String(id) }))
+  return prisma.codePaste.findMany()
 }
 
 export default async function PastePage({ params }: PastePageProps) {
-  const id = Number((await params).id)
-  if (!(await prisma.codePaste.findUnique({ where: { id } }))) {
+  const { slug } = await params
+  if (!(await prisma.codePaste.findUnique({ where: { slug } }))) {
     notFound()
   }
   const { title, content, language, createdAt, views } =
     await prisma.codePaste.update({
-      where: { id },
+      where: { slug },
       data: { views: { increment: 1 } },
     })
   return (
@@ -51,12 +50,15 @@ export default async function PastePage({ params }: PastePageProps) {
                 New Paste
               </Link>
               <Link
-                href={`/edit/${id}`}
+                href={`/edit/${slug}`}
                 className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Edit
               </Link>
-              <DeleteButton action={deletePaste.bind(null, id)} />
+              <DeleteButton
+                action={deletePaste.bind(null, slug)}
+                className="px-4 py-2 text-sm rounded-lg"
+              />
             </div>
           </div>
           <CodePreview content={content} language={language} />

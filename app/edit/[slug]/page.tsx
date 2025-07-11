@@ -5,17 +5,16 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 export interface PastePageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ slug: string }>
 }
 
 export async function generateStaticParams() {
-  const pastes = await prisma.codePaste.findMany()
-  return pastes.map(({ id }) => ({ id: String(id) }))
+  return prisma.codePaste.findMany()
 }
 
 export default async function PastePage({ params }: PastePageProps) {
-  const id = Number((await params).id)
-  const paste = await prisma.codePaste.findUnique({ where: { id } })
+  const { slug } = await params
+  const paste = await prisma.codePaste.findUnique({ where: { slug } })
   if (!paste) {
     notFound()
   }
@@ -28,7 +27,7 @@ export default async function PastePage({ params }: PastePageProps) {
               Edit Paste
             </h1>
             <Link
-              href={`/view/${id}`}
+              href={`/view/${slug}`}
               className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors"
             >
               Cancel
@@ -36,11 +35,12 @@ export default async function PastePage({ params }: PastePageProps) {
           </div>
         </div>
         <PasteEditor
+          action={updatePaste.bind(null, slug)}
           initialTitle={paste.title}
           initialContent={paste.content}
           initialLanguage={paste.language}
-          submitButtonText="Save Changes"
-          action={updatePaste.bind(null, id)}
+          initialIsPublic={paste.isPublic}
+          submitButtonText="Update Paste"
         />
       </main>
     </div>

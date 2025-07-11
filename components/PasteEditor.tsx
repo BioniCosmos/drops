@@ -9,7 +9,13 @@ export interface PasteEditorProps {
   initialTitle?: string
   initialContent?: string
   initialLanguage?: string
-  action: (title: string, content: string, language: string) => Promise<void>
+  initialIsPublic?: boolean
+  action: (
+    title: string,
+    content: string,
+    language: string,
+    isPublic: boolean,
+  ) => Promise<void>
   submitButtonText?: string
 }
 
@@ -17,17 +23,19 @@ export default function PasteEditor({
   initialTitle = '',
   initialContent = '',
   initialLanguage = 'plaintext',
+  initialIsPublic = true,
   action,
   submitButtonText = 'Save',
 }: PasteEditorProps) {
   const [title, setTitle] = useState(initialTitle)
   const [content, setContent] = useState(initialContent)
   const [language, setLanguage] = useState(initialLanguage)
+  const [isPublic, setIsPublic] = useState(initialIsPublic)
 
   const [pending, startTransition] = useTransition()
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault()
-    startTransition(() => action(title, content, language))
+    startTransition(() => action(title, content, language, isPublic))
   }
 
   return (
@@ -66,13 +74,30 @@ export default function PasteEditor({
           className="h-full"
         />
       </div>
-      <button
-        type="submit"
-        disabled={pending}
-        className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {pending ? 'Submitting...' : submitButtonText}
-      </button>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <input
+            id="isPublic"
+            type="checkbox"
+            checked={isPublic}
+            onChange={(e) => setIsPublic(e.currentTarget.checked)}
+            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
+          />
+          <label
+            htmlFor="isPublic"
+            className="text-sm text-gray-700 dark:text-gray-300"
+          >
+            Publicly visible
+          </label>
+        </div>
+        <button
+          type="submit"
+          disabled={pending}
+          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {pending ? 'Submitting...' : submitButtonText}
+        </button>
+      </div>
     </form>
   )
 }
