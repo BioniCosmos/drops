@@ -66,7 +66,11 @@ export default async function AdminPage() {
                     Edit
                   </Link>
                   <DeleteButton
-                    action={deletePaste.bind(null, paste.slug)}
+                    action={deletePaste.bind(
+                      null,
+                      paste.slug,
+                      paste.anonymousKey,
+                    )}
                     className="px-3 py-1 text-sm rounded-lg"
                   />
                 </div>
