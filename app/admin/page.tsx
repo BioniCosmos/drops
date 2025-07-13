@@ -15,6 +15,7 @@ export default async function AdminPage() {
   const pastes = await prisma.codePaste.findMany({
     where: { authorId: user.id },
     orderBy: { createdAt: 'desc' },
+    omit: { anonymousKey: true },
   })
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -66,11 +67,7 @@ export default async function AdminPage() {
                     Edit
                   </Link>
                   <DeleteButton
-                    action={deletePaste.bind(
-                      null,
-                      paste.slug,
-                      paste.anonymousKey,
-                    )}
+                    action={deletePaste.bind(null, paste.slug, '')}
                     className="px-3 py-1 text-sm rounded-lg"
                   />
                 </div>

@@ -8,6 +8,7 @@ export default async function ListPage() {
   const pastes = await prisma.codePaste.findMany({
     where: { isPublic: true },
     orderBy: { createdAt: 'desc' },
+    omit: { anonymousKey: true },
   })
 
   return (

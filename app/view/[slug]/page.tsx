@@ -17,14 +17,19 @@ export async function generateStaticParams() {
 
 export default async function PastePage({ params }: PastePageProps) {
   const { slug } = await params
-  if (!(await prisma.codePaste.findUnique({ where: { slug } }))) {
+  if (
+    !(await prisma.codePaste.findUnique({
+      where: { slug },
+      omit: { anonymousKey: true },
+    }))
+  ) {
     notFound()
   }
-  const { title, content, language, createdAt, views } =
-    await prisma.codePaste.update({
-      where: { slug },
-      data: { views: { increment: 1 } },
-    })
+  const paste = await prisma.codePaste.update({
+    where: { slug },
+    data: { views: { increment: 1 } },
+    omit: { anonymousKey: true },
+  })
   const { user } = await getCurrentSession()
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -33,13 +38,13 @@ export default async function PastePage({ params }: PastePageProps) {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                {title}
+                {paste.title}
               </h1>
               <div className="text-sm text-gray-600 dark:text-gray-300 space-x-4">
-                <span>Created: {format(new Date(createdAt), 'PPP')}</span>
-                <span>Views: {views}</span>
+                <span>Created: {format(new Date(paste.createdAt), 'PPP')}</span>
+                <span>Views: {paste.views}</span>
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                  {getLangName(language)}
+                  {getLangName(paste.language)}
                 </span>
               </div>
             </div>
@@ -50,10 +55,10 @@ export default async function PastePage({ params }: PastePageProps) {
               >
                 New Paste
               </Link>
-              <WriteOperations slug={slug} user={user} />
+              <WriteOperations paste={paste} user={user} />
             </div>
           </div>
-          <CodePreview content={content} language={language} />
+          <CodePreview content={paste.content} language={paste.language} />
         </div>
       </main>
     </div>
