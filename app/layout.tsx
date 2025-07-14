@@ -1,3 +1,4 @@
+import ProgressBar from '@/components/ProgressBar'
 import { getCurrentSession } from '@/lib/server/auth'
 import type { Metadata } from 'next'
 import Link from 'next/link'
@@ -58,7 +59,7 @@ export default async function RootLayout({
             </div>
           </nav>
         </header>
-        {children}
+        <ProgressBar>{children}</ProgressBar>
       </body>
     </html>
   )
