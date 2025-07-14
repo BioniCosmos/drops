@@ -1,6 +1,7 @@
 'use client'
 
 import { useTheme } from '@/hooks'
+import { encrypt } from '@/lib/encryption'
 import { lang, loadCodeMirrorLang } from '@/lib/lang'
 import CodeMirror from '@uiw/react-codemirror'
 import { FormEventHandler, useState, useTransition } from 'react'
@@ -31,11 +32,15 @@ export default function PasteEditor({
   const [content, setContent] = useState(initialContent)
   const [language, setLanguage] = useState(initialLanguage)
   const [isPublic, setIsPublic] = useState(initialIsPublic)
-
+  const [encryptionKey, setEncryptionKey] = useState('')
   const [pending, startTransition] = useTransition()
+
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault()
-    startTransition(() => action(title, content, language, isPublic))
+    const contentToSubmit = encryptionKey
+      ? encrypt(content, encryptionKey)
+      : content
+    startTransition(() => action(title, contentToSubmit, language, isPublic))
   }
 
   return (
@@ -63,6 +68,16 @@ export default function PasteEditor({
           </option>
         ))}
       </select>
+      <div className="flex gap-4">
+        <input
+          id="encryptionKey"
+          type="password"
+          value={encryptionKey}
+          onChange={(e) => setEncryptionKey(e.target.value)}
+          placeholder="Enter key to encrypt (optional)"
+          className="flex-grow px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
+        />
+      </div>
       <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
         <CodeMirror
           value={content}

@@ -1,4 +1,4 @@
-import CodePreview from '@/components/CodePreview'
+import { CodePreviewServer } from '@/components/CodePreview'
 import { getLangName } from '@/lib/lang'
 import prisma from '@/lib/server/db'
 import { format } from 'date-fns'
@@ -54,7 +54,7 @@ export default async function ListPage() {
                         </span>
                       </div>
                     </div>
-                    <CodePreview
+                    <CodePreviewServer
                       content={content}
                       language={language}
                       preview={true}

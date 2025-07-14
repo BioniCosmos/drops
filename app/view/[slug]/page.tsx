@@ -1,4 +1,4 @@
-import CodePreview from '@/components/CodePreview'
+import DecryptPaste from '@/app/view/[slug]/DecryptPaste'
 import { getLangName } from '@/lib/lang'
 import { getCurrentSession } from '@/lib/server/auth'
 import prisma from '@/lib/server/db'
@@ -58,7 +58,10 @@ export default async function PastePage({ params }: PastePageProps) {
               <WriteOperations paste={paste} user={user} />
             </div>
           </div>
-          <CodePreview content={paste.content} language={paste.language} />
+          <DecryptPaste
+            initialContent={paste.content}
+            language={paste.language}
+          />
         </div>
       </main>
     </div>
