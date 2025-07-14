@@ -59,7 +59,9 @@ export default async function RootLayout({
             </div>
           </nav>
         </header>
-        <ProgressBar>{children}</ProgressBar>
+        <main className="flex-grow">
+          <ProgressBar>{children}</ProgressBar>
+        </main>
       </body>
     </html>
   )
