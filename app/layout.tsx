@@ -1,5 +1,6 @@
 import ProgressBar from '@/components/ProgressBar'
 import { getCurrentSession } from '@/lib/server/auth'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import './globals.css'
@@ -62,6 +63,7 @@ export default async function RootLayout({
         <main className="grow">
           <ProgressBar>{children}</ProgressBar>
         </main>
+        <SpeedInsights />
       </body>
     </html>
   )
