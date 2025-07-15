@@ -3,20 +3,25 @@ import { getLangName } from '@/lib/lang'
 import { getCurrentSession } from '@/lib/server/auth'
 import prisma from '@/lib/server/db'
 import { format } from 'date-fns'
+import { unstable_cache } from 'next/cache'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { deletePaste } from '../actions'
+
+const getUserPastes = unstable_cache((userId: number) => {
+  return prisma.codePaste.findMany({
+    where: { authorId: userId },
+    orderBy: { createdAt: 'desc' },
+    omit: { anonymousKey: true },
+  })
+})
 
 export default async function AdminPage() {
   const { user } = await getCurrentSession()
   if (!user) {
     redirect('/login/github')
   }
-  const pastes = await prisma.codePaste.findMany({
-    where: { authorId: user.id },
-    orderBy: { createdAt: 'desc' },
-    omit: { anonymousKey: true },
-  })
+  const pastes = await getUserPastes(user.id)
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
       <main className="container mx-auto px-4 py-8">

@@ -2,15 +2,19 @@ import { CodePreviewServer } from '@/components/CodePreview'
 import { getLangName } from '@/lib/lang'
 import prisma from '@/lib/server/db'
 import { format } from 'date-fns'
+import { unstable_cache } from 'next/cache'
 import Link from 'next/link'
 
-export default async function ListPage() {
-  const pastes = await prisma.codePaste.findMany({
+const getPublicPastes = unstable_cache(() => {
+  return prisma.codePaste.findMany({
     where: { isPublic: true },
     orderBy: { createdAt: 'desc' },
     omit: { anonymousKey: true },
   })
+})
 
+export default async function ListPage() {
+  const pastes = await getPublicPastes()
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
       <main className="container mx-auto px-4 py-8">
