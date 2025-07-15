@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
 .shiki {
   @apply p-3 overflow-auto rounded-lg;
