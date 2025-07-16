@@ -1,20 +1,33 @@
 import { CodePreviewServer } from '@/components/CodePreview'
+import { PaginationNavbar } from '@/components/PaginationNavbar'
 import { getLangName } from '@/lib/lang'
 import prisma from '@/lib/server/db'
+import { pageSize } from '@/lib/utils'
 import { format } from 'date-fns'
 import { unstable_cache } from 'next/cache'
 import Link from 'next/link'
 
-const getPublicPastes = unstable_cache(() => {
-  return prisma.codePaste.findMany({
-    where: { isPublic: true },
-    orderBy: { createdAt: 'desc' },
-    omit: { anonymousKey: true },
-  })
-})
+const getPublicPastes = unstable_cache((page: number) =>
+  prisma.$transaction([
+    prisma.codePaste.findMany({
+      where: { isPublic: true },
+      orderBy: { createdAt: 'desc' },
+      omit: { anonymousKey: true },
+      take: pageSize,
+      skip: (page - 1) * pageSize,
+    }),
+    prisma.codePaste.count({ where: { isPublic: true } }),
+  ]),
+)
 
-export default async function ListPage() {
-  const pastes = await getPublicPastes()
+interface Props {
+  searchParams: Promise<Record<string, string>>
+}
+
+export default async function ListPage({ searchParams }: Props) {
+  const queries = await searchParams
+  const currentPage = Number(queries.page) || 1
+  const [pastes, totalCount] = await getPublicPastes(currentPage)
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
       <main className="container mx-auto px-4 py-8">
@@ -73,6 +86,12 @@ export default async function ListPage() {
               No pastes found. Be the first to create one!
             </div>
           )}
+          <PaginationNavbar
+            currentPage={currentPage}
+            totalCount={totalCount}
+            pathname="/list"
+            searchParams={queries}
+          />
         </div>
       </main>
     </div>

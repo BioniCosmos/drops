@@ -15,7 +15,7 @@ export default async function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const { user } = await getCurrentSession()
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body className="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
         <header className="bg-gray-100 dark:bg-gray-900">
           <nav className="container mx-auto px-4 py-3 flex justify-between items-center">

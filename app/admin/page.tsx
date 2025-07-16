@@ -1,27 +1,40 @@
 import DeleteButton from '@/components/DeleteButton'
+import { PaginationNavbar } from '@/components/PaginationNavbar'
 import { getLangName } from '@/lib/lang'
 import { getCurrentSession } from '@/lib/server/auth'
 import prisma from '@/lib/server/db'
+import { pageSize } from '@/lib/utils'
 import { format } from 'date-fns'
 import { unstable_cache } from 'next/cache'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { deletePaste } from '../actions'
 
-const getUserPastes = unstable_cache((userId: number) => {
-  return prisma.codePaste.findMany({
-    where: { authorId: userId },
-    orderBy: { createdAt: 'desc' },
-    omit: { anonymousKey: true },
-  })
-})
+const getUserPastes = unstable_cache((userId: number, page: number) =>
+  prisma.$transaction([
+    prisma.codePaste.findMany({
+      where: { authorId: userId },
+      orderBy: { createdAt: 'desc' },
+      omit: { anonymousKey: true },
+      take: pageSize,
+      skip: (page - 1) * pageSize,
+    }),
+    prisma.codePaste.count({ where: { authorId: userId } }),
+  ]),
+)
 
-export default async function AdminPage() {
+interface Props {
+  searchParams: Promise<Record<string, string>>
+}
+
+export default async function AdminPage({ searchParams }: Props) {
   const { user } = await getCurrentSession()
   if (!user) {
     redirect('/login/github')
   }
-  const pastes = await getUserPastes(user.id)
+  const queries = await searchParams
+  const currentPage = Number(queries.page) || 1
+  const [pastes, totalCount] = await getUserPastes(user.id, currentPage)
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
       <main className="container mx-auto px-4 py-8">
@@ -84,6 +97,12 @@ export default async function AdminPage() {
               You haven’t created any pastes yet.
             </div>
           )}
+          <PaginationNavbar
+            currentPage={currentPage}
+            totalCount={totalCount}
+            pathname="/admin"
+            searchParams={queries}
+          />
         </div>
       </main>
     </div>
