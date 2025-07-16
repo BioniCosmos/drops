@@ -130,8 +130,8 @@ function getPageItems(
     return range(1, totalPages)
   }
   const halfVisible = Math.floor(visibleItems / 2)
-  let startPage = Math.max(1, currentPage - halfVisible)
-  let endPage = Math.min(totalPages, currentPage + halfVisible)
+  const startPage = Math.max(1, currentPage - halfVisible)
+  const endPage = Math.min(totalPages, currentPage + halfVisible)
   const firstItem = startPage > 1 ? 1 : 0
   const lastItem = endPage < totalPages ? totalPages : 0
   const startEllipsis = startPage > 2 ? -1 : 0
