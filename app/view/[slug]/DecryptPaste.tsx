@@ -3,7 +3,7 @@
 import { CodePreviewClient } from '@/components/CodePreview'
 import { useSecret } from '@/hooks'
 import { decrypt } from '@/lib/encryption'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 export default function DecryptPaste({
   initialContent,
@@ -17,5 +17,30 @@ export default function DecryptPaste({
     (key) => setContent(decrypt(content, key)),
     () => setContent(initialContent),
   )
-  return <CodePreviewClient content={content} language={language} />
+  let count = 0
+  const decrypted = useRef(false)
+  return (
+    <div
+      onClick={() => {
+        count++
+        if (count === 10) {
+          try {
+            if (!decrypted.current) {
+              const key = prompt()
+              setContent(decrypt(content, key ?? ''))
+              decrypted.current = true
+            } else {
+              setContent(initialContent)
+              decrypted.current = false
+            }
+          } catch (e) {
+          } finally {
+            count = 0
+          }
+        }
+      }}
+    >
+      <CodePreviewClient content={content} language={language} />
+    </div>
+  )
 }

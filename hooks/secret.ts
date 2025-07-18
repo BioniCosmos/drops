@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
 
 export function useSecret(decrypt: (input: string) => void, reset: () => void) {
-  let input = ''
-  let decrypted = false
   useEffect(() => {
+    let input = ''
+    let decrypted = false
     function handleKeyDown(event: KeyboardEvent) {
       const { key } = event
       if (key === 'Enter' && !decrypted && input) {
