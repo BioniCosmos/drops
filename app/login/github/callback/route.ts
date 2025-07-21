@@ -4,13 +4,15 @@ import { github } from '@/lib/server/oauth'
 import { OAuth2RequestError } from 'arctic'
 import ky from 'ky'
 import { isRedirectError } from 'next/dist/client/components/redirect-error'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { NextRequest } from 'next/server'
 
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get('code')
   const state = req.nextUrl.searchParams.get('state')
-  const storedState = req.cookies.get('github_oauth_state')?.value
+  const cookieStore = await cookies()
+  const storedState = cookieStore.get('github_oauth_state')?.value
   if (!code || !state || !storedState || state !== storedState) {
     return new Response('invalid state or code', { status: 400 })
   }
@@ -30,7 +32,7 @@ export async function GET(req: NextRequest) {
           })
           .then(({ id }) => id)
     await createSession(userId)
-    req.cookies.delete('github_oauth_state')
+    cookieStore.delete('github_oauth_state')
     redirect('/')
   } catch (e) {
     if (isRedirectError(e)) {

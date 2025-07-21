@@ -38,7 +38,6 @@ export async function deleteSession(sessionId?: string) {
     sessionId = id
   }
   await prisma.session.delete({ where: { id: sessionId } })
-  cookieStore.delete('session')
 }
 
 export const getCurrentSession = cache(async () => {
@@ -64,7 +63,8 @@ async function validateSessionToken(token: string) {
   if (!session) {
     return null
   }
-  if (new Date().getTime() - session.lastVerifiedAt.getTime() > 10 * day) {
+  const now = new Date()
+  if (now.getTime() - session.lastVerifiedAt.getTime() > 10 * day) {
     await deleteSession(id)
     return null
   }
@@ -72,7 +72,6 @@ async function validateSessionToken(token: string) {
   if (!constantTimeEqual(secretHash, session.secretHash)) {
     return null
   }
-  const now = new Date()
   if (now.getTime() - session.lastVerifiedAt.getTime() > 10 * minute) {
     await prisma.session.update({
       where: { id },
