@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 export function useSecret(decrypt: (input: string) => void, reset: () => void) {
   useEffect(() => {
@@ -10,7 +10,7 @@ export function useSecret(decrypt: (input: string) => void, reset: () => void) {
         try {
           decrypt(input)
           decrypted = true
-        } catch (e) {
+        } catch {
         } finally {
           input = ''
         }
@@ -30,4 +30,24 @@ export function useSecret(decrypt: (input: string) => void, reset: () => void) {
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [])
+  let count = 0
+  const decrypted = useRef(false)
+  return () => {
+    count++
+    if (count === 10) {
+      try {
+        if (!decrypted.current) {
+          const key = prompt()
+          decrypt(key ?? '')
+          decrypted.current = true
+        } else {
+          reset()
+          decrypted.current = false
+        }
+      } catch {
+      } finally {
+        count = 0
+      }
+    }
+  }
 }
