@@ -12,3 +12,11 @@ export const pageSize = 10
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
+export async function hash(secret: string) {
+  const buf = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(secret),
+  )
+  return new Uint8Array(buf)
+}

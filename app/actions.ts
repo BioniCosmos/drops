@@ -34,7 +34,7 @@ export async function createPaste(
 }
 
 export async function updatePaste(
-  slug: string,
+  id: number,
   anonymousKey: string,
   title: string,
   content: string,
@@ -42,37 +42,77 @@ export async function updatePaste(
   isPublic: boolean,
 ) {
   const { user } = await getCurrentSession()
-  const paste = await prisma.codePaste.findUnique({ where: { slug } })
-  if (paste?.authorId !== user?.id && paste?.anonymousKey !== anonymousKey) {
-    throw new Error('Forbidden')
+  const paste = await prisma.codePaste.findUnique({
+    where: { id },
+    select: { id: true, slug: true, authorId: true, anonymousKey: true },
+  })
+  if (!paste) {
+    throw Error('Paste not found')
+  }
+  if (paste.authorId !== user?.id && paste.anonymousKey !== anonymousKey) {
+    throw Error('Forbidden')
   }
   await prisma.codePaste.update({
-    where: { slug },
+    where: { id: paste.id },
     data: { title: title || 'Untitled Paste', content, language, isPublic },
   })
-  revalidatePath(`/view/${slug}`)
-  revalidatePath(`/edit/${slug}`)
+  revalidatePath(`/view/${paste.slug}`)
+  revalidatePath(`/edit/${paste.slug}`)
   revalidatePath('/list')
   revalidatePath('/admin')
-  redirect(`/view/${slug}`)
+  redirect(`/view/${paste.slug}`)
 }
 
-export async function deletePaste(slug: string, anonymousKey: string) {
+export async function deletePaste(id: number, anonymousKey: string) {
   const { user } = await getCurrentSession()
-  const paste = await prisma.codePaste.findUnique({ where: { slug } })
-  if (paste?.authorId !== user?.id && paste?.anonymousKey !== anonymousKey) {
-    throw new Error('Forbidden')
+  const paste = await prisma.codePaste.findUnique({
+    where: { id },
+    select: { id: true, slug: true, authorId: true, anonymousKey: true },
+  })
+  if (!paste) {
+    throw Error('Paste not found')
   }
-  await prisma.codePaste.delete({ where: { slug } })
-  revalidatePath(`/view/${slug}`)
-  revalidatePath(`/edit/${slug}`)
+  if (paste.authorId !== user?.id && paste.anonymousKey !== anonymousKey) {
+    throw Error('Forbidden')
+  }
+  await prisma.codePaste.delete({ where: { id: paste.id } })
+  revalidatePath(`/view/${paste.slug}`)
+  revalidatePath(`/edit/${paste.slug}`)
   revalidatePath('/list')
   revalidatePath('/admin')
 }
 
-export async function verifyAnonymousPaste(slug: string, anonymousKey: string) {
+export async function claimPaste(id: number, anonymousKey: string) {
+  const { user } = await getCurrentSession()
+  if (!user) {
+    throw Error('Unauthorized')
+  }
   const paste = await prisma.codePaste.findUnique({
-    where: { slug },
+    where: { id },
+    select: { id: true, slug: true, authorId: true, anonymousKey: true },
+  })
+  if (!paste) {
+    throw Error('Paste not found')
+  }
+  if (paste.anonymousKey !== anonymousKey) {
+    throw Error('Forbidden: Invalid anonymous key')
+  }
+  if (paste.authorId !== null) {
+    throw Error('Paste is already owned')
+  }
+  await prisma.codePaste.update({
+    where: { id: paste.id },
+    data: { authorId: user.id, anonymousKey: '' },
+  })
+  revalidatePath(`/view/${paste.slug}`)
+  revalidatePath(`/edit/${paste.slug}`)
+  revalidatePath('/list')
+  revalidatePath('/admin')
+}
+
+export async function verifyAnonymousPaste(id: number, anonymousKey: string) {
+  const paste = await prisma.codePaste.findUnique({
+    where: { id },
     select: { anonymousKey: true },
   })
   return paste?.anonymousKey === anonymousKey

@@ -4,7 +4,7 @@ import { updatePaste, verifyAnonymousPaste } from '@/app/actions'
 import PasteEditor from '@/components/PasteEditor'
 import { CodePaste, User } from '@prisma/client'
 import Link from 'next/link'
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 
 interface Props {
   paste: Omit<CodePaste, 'anonymousKey'>
@@ -13,20 +13,19 @@ interface Props {
 
 export default function EditPaste({ paste, user }: Props) {
   const [isPending, startTransition] = useTransition()
-  const [isAuthorized, setIsAuthorized] = useState(false)
-  const [anonymousKey, setAnonymousKey] = useState('')
+  const anonymousKey = useRef('')
+  const [isAuthorizedAnonymous, setIsAuthorizedAnonymous] = useState(false)
+  const isAuthorized = user?.id === paste.authorId || isAuthorizedAnonymous
+  const isAnonymous = paste.authorId === null
 
   useEffect(() => {
     startTransition(async () => {
-      setAnonymousKey(localStorage.getItem(`drop-${paste.slug}`) ?? '')
-      if (
-        user?.id === paste.authorId ||
-        (await verifyAnonymousPaste(paste.slug, anonymousKey))
-      ) {
-        setIsAuthorized(true)
+      anonymousKey.current = localStorage.getItem(`drop-${paste.slug}`) ?? ''
+      if (isAnonymous) {
+        await verifyAnonymousPaste(paste.id, anonymousKey.current).then(setIsAuthorizedAnonymous)
       }
     })
-  }, [anonymousKey, paste.authorId, paste.slug, user?.id])
+  }, [paste.slug, isAnonymous, paste.id])
 
   if (isPending) {
     return (
@@ -59,7 +58,7 @@ export default function EditPaste({ paste, user }: Props) {
           </div>
         </div>
         <PasteEditor
-          action={updatePaste.bind(null, paste.slug, anonymousKey)}
+          action={updatePaste.bind(null, paste.id, anonymousKey.current)}
           initialTitle={paste.title}
           initialContent={paste.content}
           initialLanguage={paste.language}

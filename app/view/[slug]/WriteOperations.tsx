@@ -1,10 +1,10 @@
 'use client'
 
-import { deletePaste, verifyAnonymousPaste } from '@/app/actions'
+import { claimPaste, deletePaste, verifyAnonymousPaste } from '@/app/actions'
 import DeleteButton from '@/components/DeleteButton'
 import { CodePaste, User } from '@prisma/client'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface Props {
   paste: Omit<CodePaste, 'anonymousKey'>
@@ -12,23 +12,35 @@ interface Props {
 }
 
 export default function WriteOperations({ paste, user }: Props) {
-  const [isAuthorized, setIsAuthorized] = useState(false)
-  const [anonymousKey, setAnonymousKey] = useState('')
+  const anonymousKey = useRef('')
+  const [authorizedAnonymous, setAuthorizedAnonymous] = useState(false)
+  const owned = user?.id === paste.authorId
+  const authorized = authorizedAnonymous || owned
+  const isAnonymous = paste.authorId === null
+  const showClaimButton = !!user && isAnonymous && authorizedAnonymous
+  const localStorageKey = `drop-${paste.slug}`
 
   useEffect(() => {
-    ;(async () => {
-      setAnonymousKey(localStorage.getItem(`drop-${paste.slug}`) ?? '')
-      if (
-        user?.id === paste.authorId ||
-        (await verifyAnonymousPaste(paste.slug, anonymousKey))
-      ) {
-        setIsAuthorized(true)
+    anonymousKey.current = localStorage.getItem(localStorageKey) ?? ''
+    if (isAnonymous) {
+      verifyAnonymousPaste(paste.id, anonymousKey.current).then(setAuthorizedAnonymous)
+    }
+  }, [localStorageKey, isAnonymous, paste.id])
+
+  async function handleClaim() {
+    try {
+      await claimPaste(paste.id, anonymousKey.current)
+      localStorage.removeItem(localStorageKey)
+      alert('Paste claimed successfully!')
+    } catch (error) {
+      if (error instanceof Error) {
+        alert(`Failed to claim paste: ${error.message}`)
       }
-    })()
-  }, [anonymousKey, paste.authorId, paste.slug, user?.id])
+    }
+  }
 
   return (
-    isAuthorized && (
+    authorized && (
       <>
         <Link
           href={`/edit/${paste.slug}`}
@@ -37,9 +49,17 @@ export default function WriteOperations({ paste, user }: Props) {
           Edit
         </Link>
         <DeleteButton
-          action={deletePaste.bind(null, paste.slug, anonymousKey)}
+          action={deletePaste.bind(null, paste.id, anonymousKey.current)}
           className="px-4 py-2 text-sm rounded-lg"
         />
+        {showClaimButton && (
+          <button
+            onClick={handleClaim}
+            className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Claim
+          </button>
+        )}
       </>
     )
   )

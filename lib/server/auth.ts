@@ -2,7 +2,7 @@ import { nanoid } from 'nanoid'
 import { cookies } from 'next/headers'
 import { cache } from 'react'
 import { ulid } from 'ulid'
-import { day, minute, year } from '../utils'
+import { day, hash, minute, year } from '../utils'
 import prisma from './db'
 
 export async function createSession(userId: number) {
@@ -79,14 +79,6 @@ async function validateSessionToken(token: string) {
     })
   }
   return session
-}
-
-async function hash(secret: string) {
-  const buf = await crypto.subtle.digest(
-    'SHA-256',
-    new TextEncoder().encode(secret),
-  )
-  return new Uint8Array(buf)
 }
 
 function constantTimeEqual(a: Uint8Array, b: Uint8Array) {

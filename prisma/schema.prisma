@@ -9,26 +9,33 @@ datasource db {
 }
 
 model CodePaste {
-  id           Int      @id @default(autoincrement())
+  id           Int         @id @default(autoincrement())
   title        String
   content      String
   language     String
-  createdAt    DateTime @default(now())
-  views        Int      @default(0)
+  createdAt    DateTime    @default(now())
+  views        Int         @default(0)
+  uniqueViews  Int         @default(0)
   authorId     Int?
   isPublic     Boolean
-  slug         String   @unique
-  anonymousKey String   @unique
-  author       User?    @relation(fields: [authorId], references: [id])
+  slug         String      @unique
+  anonymousKey String      @unique
+  author       User?       @relation(fields: [authorId], references: [id])
+  pasteViews   PasteView[]
+
+  @@index([authorId, createdAt(sort: Desc)])
+  @@index([isPublic, createdAt(sort: Desc)])
+  @@index([createdAt(sort: Desc)])
 }
 
 model User {
-  id       Int         @id @default(autoincrement())
-  userId   String      @unique
-  githubId String      @unique
-  username String
-  sessions Session[]
-  pastes   CodePaste[]
+  id         Int         @id @default(autoincrement())
+  userId     String      @unique
+  githubId   String      @unique
+  username   String
+  sessions   Session[]
+  pastes     CodePaste[]
+  pasteViews PasteView[]
 }
 
 model Session {
@@ -37,4 +44,18 @@ model Session {
   userId         Int
   lastVerifiedAt DateTime
   user           User     @relation(fields: [userId], references: [id])
+}
+
+model PasteView {
+  id       Int       @id @default(autoincrement())
+  pasteId  Int
+  ipHash   Bytes
+  uaHash   Bytes
+  userId   Int?
+  viewedAt DateTime  @default(now())
+  paste    CodePaste @relation(fields: [pasteId], references: [id])
+  user     User?     @relation(fields: [userId], references: [id])
+
+  @@unique([pasteId, ipHash, uaHash])
+  @@index([pasteId, viewedAt])
 }

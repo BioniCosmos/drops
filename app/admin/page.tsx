@@ -1,5 +1,6 @@
 import DeleteButton from '@/components/DeleteButton'
 import { PaginationNavbar } from '@/components/PaginationNavbar'
+import PasteStats from '@/components/PasteStats'
 import { getLangName } from '@/lib/lang'
 import { getCurrentSession } from '@/lib/server/auth'
 import prisma from '@/lib/server/db'
@@ -71,7 +72,10 @@ export default async function AdminPage({ searchParams }: Props) {
                     <span>
                       Created: {format(new Date(paste.createdAt), 'PPP')}
                     </span>
-                    <span>Views: {paste.views}</span>
+                    <PasteStats
+                      views={paste.views}
+                      uniqueViews={paste.uniqueViews}
+                    />
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                       {getLangName(paste.language)}
                     </span>
@@ -85,7 +89,7 @@ export default async function AdminPage({ searchParams }: Props) {
                     Edit
                   </Link>
                   <DeleteButton
-                    action={deletePaste.bind(null, paste.slug, '')}
+                    action={deletePaste.bind(null, paste.id, '')}
                     className="px-3 py-1 text-sm rounded-lg"
                   />
                 </div>

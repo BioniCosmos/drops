@@ -1,5 +1,6 @@
 import { CodePreviewServer } from '@/components/CodePreview'
 import { PaginationNavbar } from '@/components/PaginationNavbar'
+import PasteStats from '@/components/PasteStats'
 import { getLangName } from '@/lib/lang'
 import prisma from '@/lib/server/db'
 import { pageSize } from '@/lib/utils'
@@ -50,7 +51,16 @@ export default async function ListPage({ searchParams }: Props) {
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg divide-y divide-gray-200 dark:divide-gray-700">
             {pastes.map(
-              ({ id, title, content, language, createdAt, views, slug }) => (
+              ({
+                id,
+                title,
+                content,
+                language,
+                createdAt,
+                views,
+                uniqueViews,
+                slug,
+              }) => (
                 <Link
                   key={id}
                   href={`/view/${slug}`}
@@ -65,7 +75,7 @@ export default async function ListPage({ searchParams }: Props) {
                         <span>
                           Created: {format(new Date(createdAt), 'PPP')}
                         </span>
-                        <span>Views: {views}</span>
+                        <PasteStats views={views} uniqueViews={uniqueViews} />
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                           {getLangName(language)}
                         </span>
