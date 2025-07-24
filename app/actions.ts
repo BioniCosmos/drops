@@ -2,8 +2,10 @@
 
 import { getCurrentSession } from '@/lib/server/auth'
 import prisma from '@/lib/server/db'
+import { day, hash } from '@/lib/utils'
 import { nanoid } from 'nanoid'
 import { revalidatePath } from 'next/cache'
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 
 export async function createPaste(
@@ -116,4 +118,48 @@ export async function verifyAnonymousPaste(id: number, anonymousKey: string) {
     select: { anonymousKey: true },
   })
   return paste?.anonymousKey === anonymousKey
+}
+
+export async function trackPasteView(pasteId: number) {
+  const { user } = await getCurrentSession()
+  const headersList = await headers()
+  const ip = headersList.get('x-forwarded-for')?.split(',')[0] ?? ''
+  const userAgent = headersList.get('user-agent') ?? 'unknown'
+  const ipHash = await hash(ip)
+  const uaHash = await hash(userAgent)
+
+  // check if the user has visited the paste in the last 24 hours
+  const existingView = await prisma.pasteView.findFirst({
+    where: {
+      pasteId,
+      ipHash,
+      uaHash,
+      viewedAt: { gte: new Date(Date.now() - day * 1000) },
+    },
+  })
+  if (existingView) {
+    return null
+  }
+
+  const { slug, views, uniqueViews } = await prisma.$transaction(async (tx) => {
+    await tx.pasteView.create({
+      data: { pasteId, ipHash, uaHash, userId: user?.id },
+    })
+    const isFirstTimeVisitor = !(await prisma.pasteView.findFirst({
+      where: { pasteId, ipHash, uaHash },
+    }))
+    return tx.codePaste.update({
+      where: { id: pasteId },
+      data: {
+        views: { increment: 1 },
+        ...(isFirstTimeVisitor && { uniqueViews: { increment: 1 } }),
+      },
+      select: { slug: true, views: true, uniqueViews: true },
+    })
+  })
+
+  revalidatePath(`/view/${slug}`)
+  revalidatePath('/list')
+  revalidatePath('/admin')
+  return { views, uniqueViews }
 }

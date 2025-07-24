@@ -3,7 +3,6 @@ import PasteStats from '@/components/PasteStats'
 import { getLangName } from '@/lib/lang'
 import { getCurrentSession } from '@/lib/server/auth'
 import prisma from '@/lib/server/db'
-import { trackPasteView } from '@/lib/server/views'
 import { format } from 'date-fns'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -27,7 +26,6 @@ export default async function PastePage({ params }: PastePageProps) {
     notFound()
   }
   const { user } = await getCurrentSession()
-  await trackPasteView(paste.id, user?.id)
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
       <main className="container mx-auto px-4 py-8">
@@ -40,8 +38,9 @@ export default async function PastePage({ params }: PastePageProps) {
               <div className="text-sm text-gray-600 dark:text-gray-300 space-x-4">
                 <span>Created: {format(new Date(paste.createdAt), 'PPP')}</span>
                 <PasteStats
-                  views={paste.views}
-                  uniqueViews={paste.uniqueViews}
+                  id={paste.id}
+                  initialViews={paste.views}
+                  initialUniqueViews={paste.uniqueViews}
                 />
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                   {getLangName(paste.language)}

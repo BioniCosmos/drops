@@ -73,8 +73,9 @@ export default async function AdminPage({ searchParams }: Props) {
                       Created: {format(new Date(paste.createdAt), 'PPP')}
                     </span>
                     <PasteStats
-                      views={paste.views}
-                      uniqueViews={paste.uniqueViews}
+                      id={paste.id}
+                      initialViews={paste.views}
+                      initialUniqueViews={paste.uniqueViews}
                     />
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                       {getLangName(paste.language)}
