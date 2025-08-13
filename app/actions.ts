@@ -1,8 +1,11 @@
 'use server'
 
+import type { XFile } from '@/components/FileManager'
+import { getLangExtension } from '@/lib/lang'
 import { getCurrentSession } from '@/lib/server/auth'
 import prisma from '@/lib/server/db'
 import { day, hash } from '@/lib/utils'
+import JSZip from 'jszip'
 import { nanoid } from 'nanoid'
 import { revalidatePath } from 'next/cache'
 import { headers } from 'next/headers'
@@ -13,11 +16,12 @@ export async function createPaste(
   content: string,
   language: string,
   isPublic: boolean,
+  files: XFile[],
 ) {
   const { user } = await getCurrentSession()
   const anonymousKey = nanoid()
   const slug = nanoid()
-  await prisma.codePaste.create({
+  const { id } = await prisma.codePaste.create({
     data: {
       title: title || 'Untitled Paste',
       content,
@@ -27,7 +31,11 @@ export async function createPaste(
       slug,
       anonymousKey,
     },
+    select: { id: true },
   })
+  if (files.length > 0) {
+    await uploadFiles(id, files)
+  }
   revalidatePath(`/view/${slug}`)
   revalidatePath(`/edit/${slug}`)
   revalidatePath('/list')
@@ -36,17 +44,19 @@ export async function createPaste(
 }
 
 export async function updatePaste(
-  id: number,
+  slug: string,
   anonymousKey: string,
   title: string,
   content: string,
   language: string,
   isPublic: boolean,
+  newFiles: XFile[],
+  filesToDel: string[],
 ) {
   const { user } = await getCurrentSession()
   const paste = await prisma.codePaste.findUnique({
-    where: { id },
-    select: { id: true, slug: true, authorId: true, anonymousKey: true },
+    where: { slug },
+    select: { id: true, authorId: true, anonymousKey: true },
   })
   if (!paste) {
     throw Error('Paste not found')
@@ -58,18 +68,26 @@ export async function updatePaste(
     where: { id: paste.id },
     data: { title: title || 'Untitled Paste', content, language, isPublic },
   })
-  revalidatePath(`/view/${paste.slug}`)
-  revalidatePath(`/edit/${paste.slug}`)
+  if (filesToDel.length > 0) {
+    await prisma.pasteFile.deleteMany({
+      where: { id: { in: filesToDel }, pasteId: paste.id },
+    })
+  }
+  if (newFiles.length > 0) {
+    await uploadFiles(paste.id, newFiles)
+  }
+  revalidatePath(`/view/${slug}`)
+  revalidatePath(`/edit/${slug}`)
   revalidatePath('/list')
   revalidatePath('/admin')
-  redirect(`/view/${paste.slug}`)
+  redirect(`/view/${slug}`)
 }
 
-export async function deletePaste(id: number, anonymousKey: string) {
+export async function deletePaste(slug: string, anonymousKey: string) {
   const { user } = await getCurrentSession()
   const paste = await prisma.codePaste.findUnique({
-    where: { id },
-    select: { id: true, slug: true, authorId: true, anonymousKey: true },
+    where: { slug },
+    select: { id: true, authorId: true, anonymousKey: true },
   })
   if (!paste) {
     throw Error('Paste not found')
@@ -78,20 +96,20 @@ export async function deletePaste(id: number, anonymousKey: string) {
     throw Error('Forbidden')
   }
   await prisma.codePaste.delete({ where: { id: paste.id } })
-  revalidatePath(`/view/${paste.slug}`)
-  revalidatePath(`/edit/${paste.slug}`)
+  revalidatePath(`/view/${slug}`)
+  revalidatePath(`/edit/${slug}`)
   revalidatePath('/list')
   revalidatePath('/admin')
 }
 
-export async function claimPaste(id: number, anonymousKey: string) {
+export async function claimPaste(slug: string, anonymousKey: string) {
   const { user } = await getCurrentSession()
   if (!user) {
     throw Error('Unauthorized')
   }
   const paste = await prisma.codePaste.findUnique({
-    where: { id },
-    select: { id: true, slug: true, authorId: true, anonymousKey: true },
+    where: { slug },
+    select: { id: true, authorId: true, anonymousKey: true },
   })
   if (!paste) {
     throw Error('Paste not found')
@@ -106,21 +124,21 @@ export async function claimPaste(id: number, anonymousKey: string) {
     where: { id: paste.id },
     data: { authorId: user.id, anonymousKey: '' },
   })
-  revalidatePath(`/view/${paste.slug}`)
-  revalidatePath(`/edit/${paste.slug}`)
+  revalidatePath(`/view/${slug}`)
+  revalidatePath(`/edit/${slug}`)
   revalidatePath('/list')
   revalidatePath('/admin')
 }
 
-export async function verifyAnonymousPaste(id: number, anonymousKey: string) {
+export async function verifyAnonymousPaste(slug: string, anonymousKey: string) {
   const paste = await prisma.codePaste.findUnique({
-    where: { id },
+    where: { slug },
     select: { anonymousKey: true },
   })
   return paste?.anonymousKey === anonymousKey
 }
 
-export async function trackPasteView(pasteId: number) {
+export async function trackPasteView(slug: string) {
   const { user } = await getCurrentSession()
   const headersList = await headers()
   const ip = headersList.get('x-forwarded-for')?.split(',')[0] ?? ''
@@ -128,6 +146,14 @@ export async function trackPasteView(pasteId: number) {
   const ipHash = await hash(ip)
   const uaHash = await hash(userAgent)
 
+  const paste = await prisma.codePaste.findUnique({
+    where: { slug },
+    select: { id: true },
+  })
+  if (!paste) {
+    throw Error('Paste not found')
+  }
+  const pasteId = paste.id
   // check if the user has visited the paste in the last 24 hours
   const existingView = await prisma.pasteView.findFirst({
     where: {
@@ -136,17 +162,19 @@ export async function trackPasteView(pasteId: number) {
       uaHash,
       viewedAt: { gte: new Date(Date.now() - day * 1000) },
     },
+    select: {},
   })
   if (existingView) {
     return null
   }
 
-  const { slug, views, uniqueViews } = await prisma.$transaction(async (tx) => {
+  const { views, uniqueViews } = await prisma.$transaction(async (tx) => {
     await tx.pasteView.create({
       data: { pasteId, ipHash, uaHash, userId: user?.id },
     })
     const isFirstTimeVisitor = !(await prisma.pasteView.findFirst({
       where: { pasteId, ipHash, uaHash },
+      select: {},
     }))
     return tx.codePaste.update({
       where: { id: pasteId },
@@ -154,7 +182,7 @@ export async function trackPasteView(pasteId: number) {
         views: { increment: 1 },
         ...(isFirstTimeVisitor && { uniqueViews: { increment: 1 } }),
       },
-      select: { slug: true, views: true, uniqueViews: true },
+      select: { views: true, uniqueViews: true },
     })
   })
 
@@ -162,4 +190,56 @@ export async function trackPasteView(pasteId: number) {
   revalidatePath('/list')
   revalidatePath('/admin')
   return { views, uniqueViews }
+}
+
+async function uploadFiles(pasteId: number, files: XFile[]) {
+  const maxSize = 10 * 1024 * 1024
+  for (const file of files) {
+    if (file.size > maxSize) {
+      throw Error(`File ${file.filename} exceeds 10 MB limit`)
+    }
+  }
+  const contents = await Promise.all(files.map((file) => file.file.bytes()))
+  await prisma.pasteFile.createMany({
+    data: files.map((file, i) => ({
+      id: file.id,
+      pasteId,
+      filename: file.filename,
+      content: contents[i],
+      mimeType: file.mimeType,
+      size: file.size,
+    })),
+  })
+}
+
+export async function exportPaste(slug: string): Promise<[Blob, string]> {
+  const { user } = await getCurrentSession()
+  if (!user) {
+    throw Error('Unauthorized')
+  }
+  const paste = await prisma.codePaste.findUnique({
+    where: { slug },
+    select: {
+      title: true,
+      content: true,
+      language: true,
+      files: { select: { filename: true, content: true } },
+    },
+  })
+  if (!paste) {
+    throw Error('Paste not found')
+  }
+  const zip = new JSZip()
+  const pasteFolder = zip.folder(paste.title)!
+  pasteFolder.file(
+    `${paste.title}${getLangExtension(paste.language)}`,
+    paste.content,
+  )
+  if (paste.files.length > 0) {
+    const attachmentsFolder = pasteFolder.folder('attachments')!
+    paste.files.forEach((file) =>
+      attachmentsFolder.file(file.filename, file.content),
+    )
+  }
+  return [await zip.generateAsync({ type: 'blob' }), `${paste.title}.zip`]
 }

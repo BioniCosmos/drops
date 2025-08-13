@@ -15,6 +15,16 @@ export default async function PastePage({ params }: PastePageProps) {
   const { slug } = await params
   const paste = await prisma.codePaste.findUnique({
     where: { slug },
+    include: {
+      files: {
+        select: {
+          id: true,
+          filename: true,
+          mimeType: true,
+          size: true,
+        },
+      },
+    },
     omit: { anonymousKey: true },
   })
   if (!paste) {

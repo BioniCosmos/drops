@@ -23,13 +23,15 @@ export default function WriteOperations({ paste, user }: Props) {
   useEffect(() => {
     anonymousKey.current = localStorage.getItem(localStorageKey) ?? ''
     if (isAnonymous) {
-      verifyAnonymousPaste(paste.id, anonymousKey.current).then(setAuthorizedAnonymous)
+      verifyAnonymousPaste(paste.slug, anonymousKey.current).then(
+        setAuthorizedAnonymous,
+      )
     }
-  }, [localStorageKey, isAnonymous, paste.id])
+  }, [localStorageKey, isAnonymous, paste.slug])
 
   async function handleClaim() {
     try {
-      await claimPaste(paste.id, anonymousKey.current)
+      await claimPaste(paste.slug, anonymousKey.current)
       localStorage.removeItem(localStorageKey)
       alert('Paste claimed successfully!')
     } catch (error) {
@@ -49,7 +51,7 @@ export default function WriteOperations({ paste, user }: Props) {
           Edit
         </Link>
         <DeleteButton
-          action={deletePaste.bind(null, paste.id, anonymousKey.current)}
+          action={deletePaste.bind(null, paste.slug, anonymousKey.current)}
           className="px-4 py-2 text-sm rounded-lg"
         />
         {showClaimButton && (

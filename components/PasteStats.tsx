@@ -5,13 +5,13 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 interface PasteStatsProps {
-  id: number
+  slug: string
   initialViews: number
   initialUniqueViews: number
 }
 
 export default function PasteStats({
-  id,
+  slug,
   initialViews,
   initialUniqueViews,
 }: PasteStatsProps) {
@@ -21,14 +21,14 @@ export default function PasteStats({
 
   useEffect(() => {
     if (pathname.startsWith('/view/')) {
-      trackPasteView(id).then((result) => {
+      trackPasteView(slug).then((result) => {
         if (result) {
           setViews(result.views)
           setUniqueViews(result.uniqueViews)
         }
       })
     }
-  }, [id, pathname])
+  }, [slug, pathname])
 
   return (
     <span title={`${uniqueViews} unique visitors`}>

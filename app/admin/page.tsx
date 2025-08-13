@@ -73,7 +73,7 @@ export default async function AdminPage({ searchParams }: Props) {
                       Created: {format(new Date(paste.createdAt), 'PPP')}
                     </span>
                     <PasteStats
-                      id={paste.id}
+                      slug={paste.slug}
                       initialViews={paste.views}
                       initialUniqueViews={paste.uniqueViews}
                     />
@@ -90,7 +90,7 @@ export default async function AdminPage({ searchParams }: Props) {
                     Edit
                   </Link>
                   <DeleteButton
-                    action={deletePaste.bind(null, paste.id, '')}
+                    action={deletePaste.bind(null, paste.slug, '')}
                     className="px-3 py-1 text-sm rounded-lg"
                   />
                 </div>

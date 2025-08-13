@@ -2,12 +2,29 @@
 
 import { updatePaste, verifyAnonymousPaste } from '@/app/actions'
 import PasteEditor from '@/components/PasteEditor'
-import { CodePaste, User } from '@prisma/client'
+import { Prisma, User } from '@prisma/client'
 import Link from 'next/link'
 import { useEffect, useRef, useState, useTransition } from 'react'
 
 interface Props {
-  paste: Omit<CodePaste, 'anonymousKey'>
+  paste: Prisma.CodePasteGetPayload<{
+    select: {
+      authorId: true
+      slug: true
+      title: true
+      content: true
+      language: true
+      isPublic: true
+      files: {
+        select: {
+          id: true
+          filename: true
+          mimeType: true
+          size: true
+        }
+      }
+    }
+  }>
   user: User | null
 }
 
@@ -22,10 +39,12 @@ export default function EditPaste({ paste, user }: Props) {
     startTransition(async () => {
       anonymousKey.current = localStorage.getItem(`drop-${paste.slug}`) ?? ''
       if (isAnonymous) {
-        await verifyAnonymousPaste(paste.id, anonymousKey.current).then(setIsAuthorizedAnonymous)
+        await verifyAnonymousPaste(paste.slug, anonymousKey.current).then(
+          setIsAuthorizedAnonymous,
+        )
       }
     })
-  }, [paste.slug, isAnonymous, paste.id])
+  }, [paste.slug, isAnonymous])
 
   if (isPending) {
     return (
@@ -57,14 +76,14 @@ export default function EditPaste({ paste, user }: Props) {
             </Link>
           </div>
         </div>
-        <PasteEditor
-          action={updatePaste.bind(null, paste.id, anonymousKey.current)}
-          initialTitle={paste.title}
-          initialContent={paste.content}
-          initialLanguage={paste.language}
-          initialIsPublic={paste.isPublic}
-          submitButtonText="Update Paste"
-        />
+
+        <div className="space-y-8">
+          <PasteEditor
+            paste={paste}
+            action={updatePaste.bind(null, paste.slug, anonymousKey.current)}
+            submitButtonText="Update Paste"
+          />
+        </div>
       </main>
     </div>
   )

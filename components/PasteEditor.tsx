@@ -2,37 +2,48 @@
 
 import { useTheme } from '@/hooks'
 import { encrypt } from '@/lib/encryption'
-import { lang, loadCodeMirrorLang } from '@/lib/lang'
+import { getLangFromExtension, lang, loadCodeMirrorLang } from '@/lib/lang'
+import { Prisma } from '@prisma/client'
 import CodeMirror from '@uiw/react-codemirror'
 import { FormEventHandler, useState, useTransition } from 'react'
+import ExportImport from './ExportImport'
+import { FileManager, useFiles, type XFile } from './FileManager'
 
 export interface PasteEditorProps {
-  initialTitle?: string
-  initialContent?: string
-  initialLanguage?: string
-  initialIsPublic?: boolean
+  paste?: Prisma.CodePasteGetPayload<{
+    select: {
+      slug: true
+      title: true
+      content: true
+      language: true
+      isPublic: true
+      files: {
+        select: { id: true; filename: true; mimeType: true; size: true }
+      }
+    }
+  }>
   action: (
     title: string,
     content: string,
     language: string,
     isPublic: boolean,
+    newFiles: XFile[],
+    filesToDel: string[],
   ) => Promise<void>
   submitButtonText?: string
 }
 
 export default function PasteEditor({
-  initialTitle = '',
-  initialContent = '',
-  initialLanguage = 'plaintext',
-  initialIsPublic = true,
+  paste,
   action,
   submitButtonText = 'Save',
 }: PasteEditorProps) {
-  const [title, setTitle] = useState(initialTitle)
-  const [content, setContent] = useState(initialContent)
-  const [language, setLanguage] = useState(initialLanguage)
-  const [isPublic, setIsPublic] = useState(initialIsPublic)
+  const [title, setTitle] = useState(paste?.title ?? '')
+  const [content, setContent] = useState(paste?.content ?? '')
+  const [language, setLanguage] = useState(paste?.language ?? 'plaintext')
+  const [isPublic, setIsPublic] = useState(paste?.isPublic ?? true)
   const [encryptionKey, setEncryptionKey] = useState('')
+  const { newFiles, filesToDel } = useFiles()
   const [pending, startTransition] = useTransition()
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
@@ -40,7 +51,15 @@ export default function PasteEditor({
     const contentToSubmit = encryptionKey
       ? encrypt(content, encryptionKey)
       : content
-    startTransition(() => action(title, contentToSubmit, language, isPublic))
+    startTransition(() =>
+      action(title, contentToSubmit, language, isPublic, newFiles, filesToDel),
+    )
+  }
+
+  function handleImport(title: string, content: string, extension: string) {
+    setTitle(title)
+    setContent(content)
+    setLanguage(getLangFromExtension(extension))
   }
 
   return (
@@ -88,6 +107,18 @@ export default function PasteEditor({
           onChange={(value) => setContent(value)}
           className="h-full"
         />
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">
+          Import/Export
+        </h3>
+        <ExportImport slug={paste?.slug} onImport={handleImport} />
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">
+          File Attachments
+        </h3>
+        <FileManager files={paste?.files} />
       </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">

@@ -22,6 +22,7 @@ model CodePaste {
   anonymousKey String      @unique
   author       User?       @relation(fields: [authorId], references: [id])
   pasteViews   PasteView[]
+  files        PasteFile[]
 
   @@index([authorId, createdAt(sort: Desc)])
   @@index([isPublic, createdAt(sort: Desc)])
@@ -58,4 +59,17 @@ model PasteView {
 
   @@unique([pasteId, ipHash, uaHash])
   @@index([pasteId, viewedAt])
+}
+
+model PasteFile {
+  id        String    @id
+  pasteId   Int
+  filename  String
+  content   Bytes
+  mimeType  String
+  size      Int
+  createdAt DateTime  @default(now())
+  paste     CodePaste @relation(fields: [pasteId], references: [id])
+
+  @@index([pasteId])
 }

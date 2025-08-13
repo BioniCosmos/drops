@@ -52,7 +52,6 @@ export default async function ListPage({ searchParams }: Props) {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg divide-y divide-gray-200 dark:divide-gray-700">
             {pastes.map(
               ({
-                id,
                 title,
                 content,
                 language,
@@ -62,7 +61,7 @@ export default async function ListPage({ searchParams }: Props) {
                 slug,
               }) => (
                 <Link
-                  key={id}
+                  key={slug}
                   href={`/view/${slug}`}
                   className="block hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
@@ -76,7 +75,7 @@ export default async function ListPage({ searchParams }: Props) {
                           Created: {format(new Date(createdAt), 'PPP')}
                         </span>
                         <PasteStats
-                          id={id}
+                          slug={slug}
                           initialViews={views}
                           initialUniqueViews={uniqueViews}
                         />
