@@ -33,7 +33,7 @@ export function getLangExtension(langValue: string) {
 
 export function getLangFromExtension(extension: string) {
   return (
-    Object.entries(lang).find(([_, v]) => v.extension === extension)?.[0] ??
+    Object.entries(lang).find(([, v]) => v.extension === extension)?.[0] ??
     'plaintext'
   )
 }
