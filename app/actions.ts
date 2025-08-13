@@ -155,27 +155,28 @@ export async function trackPasteView(slug: string) {
   }
   const pasteId = paste.id
   // check if the user has visited the paste in the last 24 hours
-  const existingView = await prisma.pasteView.findFirst({
+  const existingViewCount = await prisma.pasteView.count({
     where: {
       pasteId,
       ipHash,
       uaHash,
       viewedAt: { gte: new Date(Date.now() - day * 1000) },
     },
-    select: {},
   })
-  if (existingView) {
+  if (existingViewCount > 0) {
     return null
   }
 
   const { views, uniqueViews } = await prisma.$transaction(async (tx) => {
-    await tx.pasteView.create({
-      data: { pasteId, ipHash, uaHash, userId: user?.id },
+    const visitCount = await prisma.pasteView.count({
+      where: { pasteId, ipHash, uaHash, userId: user?.id },
     })
-    const isFirstTimeVisitor = !(await prisma.pasteView.findFirst({
-      where: { pasteId, ipHash, uaHash },
-      select: {},
-    }))
+    const isFirstTimeVisitor = visitCount === 0
+    if (isFirstTimeVisitor) {
+      await tx.pasteView.create({
+        data: { pasteId, ipHash, uaHash, userId: user?.id },
+      })
+    }
     return tx.codePaste.update({
       where: { id: pasteId },
       data: {
