@@ -29,7 +29,9 @@ export async function GET(_: NextRequest, { params }: Context) {
   return new Response(file.content, {
     headers: {
       'Content-Type': file.mimeType,
-      'Content-Disposition': `attachment; filename="${file.filename}"`,
+      'Content-Disposition': `attachment; filename="${encodeURIComponent(
+        file.filename,
+      )}"`,
       'Content-Length': file.size.toString(),
     },
   })
