@@ -54,7 +54,7 @@ model PasteView {
   uaHash   Bytes
   userId   Int?
   viewedAt DateTime  @default(now())
-  paste    CodePaste @relation(fields: [pasteId], references: [id])
+  paste    CodePaste @relation(fields: [pasteId], references: [id], onDelete: Cascade)
   user     User?     @relation(fields: [userId], references: [id])
 
   @@unique([pasteId, ipHash, uaHash])
@@ -69,7 +69,7 @@ model PasteFile {
   mimeType  String
   size      Int
   createdAt DateTime  @default(now())
-  paste     CodePaste @relation(fields: [pasteId], references: [id])
+  paste     CodePaste @relation(fields: [pasteId], references: [id], onDelete: Cascade)
 
   @@index([pasteId])
 }
