@@ -40,13 +40,11 @@ model User {
 }
 
 model Session {
-  id             String    @id
+  id             String   @id
   secretHash     Bytes
   userId         Int
   lastVerifiedAt DateTime
-  user           User      @relation(fields: [userId], references: [id])
-  deletedAt      DateTime?
-  details        String    @default("")
+  user           User     @relation(fields: [userId], references: [id])
 }
 
 model PasteView {

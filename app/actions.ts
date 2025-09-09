@@ -1,10 +1,11 @@
 'use server'
 
 import type { XFile } from '@/components/FileManager'
+import { day, Duration } from '@/lib/duration'
 import { getLangExtension } from '@/lib/lang'
 import { getCurrentSession } from '@/lib/server/auth'
 import prisma from '@/lib/server/db'
-import { day, hash } from '@/lib/utils'
+import { hash } from '@/lib/utils'
 import JSZip from 'jszip'
 import { nanoid } from 'nanoid'
 import { revalidatePath } from 'next/cache'
@@ -160,7 +161,7 @@ export async function trackPasteView(slug: string) {
       pasteId,
       ipHash,
       uaHash,
-      viewedAt: { gte: new Date(Date.now() - day * 1000) },
+      viewedAt: { gte: new Date(Date.now() - Duration(day).milliseconds) },
     },
   })
   if (existingViewCount > 0) {

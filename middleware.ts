@@ -1,5 +1,5 @@
-import { year } from '@/lib/utils'
 import { NextRequest, NextResponse } from 'next/server'
+import { Duration, year } from './lib/duration'
 
 export function middleware(req: NextRequest) {
   const res = NextResponse.next()
@@ -8,7 +8,7 @@ export function middleware(req: NextRequest) {
     res.cookies.set({
       name: 'session',
       value: token,
-      maxAge: year,
+      maxAge: Duration(year).seconds,
       path: '/',
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

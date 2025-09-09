@@ -1,8 +1,9 @@
 import { nanoid } from 'nanoid'
-import { cookies, headers } from 'next/headers'
+import { cookies } from 'next/headers'
 import { cache } from 'react'
 import { ulid } from 'ulid'
-import { day, hash, minute, year } from '../utils'
+import { day, Duration, minute, year } from '../duration'
+import { hash } from '../utils'
 import prisma from './db'
 
 export async function createSession(userId: number) {
@@ -20,19 +21,14 @@ export async function createSession(userId: number) {
   cookieStore.set({
     name: 'session',
     value: `${id}.${secret}`,
-    maxAge: year,
+    maxAge: Duration(year).seconds,
     path: '/',
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
   })
 }
 
-export async function deleteSession(
-  entry: 'logout' | 'expire',
-  nowTime: Date | null,
-  lastTime: Date | null,
-  sessionId?: string,
-) {
+export async function deleteSession(sessionId?: string) {
   const cookieStore = await cookies()
   if (!sessionId) {
     const token = cookieStore.get('session')?.value
@@ -42,16 +38,7 @@ export async function deleteSession(
     const [id] = token.split('.')
     sessionId = id
   }
-  const reasons = {
-    entry,
-    nowTime,
-    lastTime,
-    headers: Object.fromEntries((await headers()).entries()),
-  }
-  await prisma.session.update({
-    where: { id: sessionId },
-    data: { deletedAt: new Date(), details: JSON.stringify(reasons) },
-  })
+  await prisma.session.delete({ where: { id: sessionId } })
 }
 
 export const getCurrentSession = cache(async () => {
@@ -73,22 +60,26 @@ export const getCurrentSession = cache(async () => {
 
 async function validateSessionToken(token: string) {
   const [id, secret] = token.split('.')
-  const session = await prisma.session.findUnique({
-    where: { id, deletedAt: null },
-  })
+  const session = await prisma.session.findUnique({ where: { id } })
   if (!session) {
     return null
   }
   const now = new Date()
-  if (now.getTime() - session.lastVerifiedAt.getTime() > 10 * day) {
-    await deleteSession('expire', now, session.lastVerifiedAt, id)
+  if (
+    now.getTime() - session.lastVerifiedAt.getTime() >
+    Duration(10 * day).milliseconds
+  ) {
+    await deleteSession(id)
     return null
   }
   const secretHash = await hash(secret)
   if (!constantTimeEqual(secretHash, session.secretHash)) {
     return null
   }
-  if (now.getTime() - session.lastVerifiedAt.getTime() > 10 * minute) {
+  if (
+    now.getTime() - session.lastVerifiedAt.getTime() >
+    Duration(10 * minute).milliseconds
+  ) {
     await prisma.session.update({
       where: { id },
       data: { lastVerifiedAt: now },
