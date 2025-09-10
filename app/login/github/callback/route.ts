@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     const tokens = await github().validateAuthorizationCode(code)
     const { login, name } = await ky('https://api.github.com/user', {
       headers: { Authorization: `Bearer ${tokens.accessToken()}` },
-    }).json<{ login: string; name: string }>()
+    }).json<{ login: string; name: string | null }>()
     const existingUser = await prisma.user.findUnique({
       where: { githubId: login },
     })
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
       ? existingUser.id
       : await prisma.user
           .create({
-            data: { userId: login, githubId: login, username: name },
+            data: { userId: login, githubId: login, username: name ?? '' },
           })
           .then(({ id }) => id)
     await createSession(userId)
