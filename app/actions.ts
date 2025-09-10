@@ -123,7 +123,7 @@ export async function claimPaste(slug: string, anonymousKey: string) {
   }
   await prisma.codePaste.update({
     where: { id: paste.id },
-    data: { authorId: user.id, anonymousKey: '' },
+    data: { authorId: user.id },
   })
   revalidatePath(`/view/${slug}`)
   revalidatePath(`/edit/${slug}`)
