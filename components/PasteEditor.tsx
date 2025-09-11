@@ -4,7 +4,7 @@ import { useTheme } from '@/hooks'
 import { encrypt } from '@/lib/encryption'
 import { getLangFromExtension, lang, loadCodeMirrorLang } from '@/lib/lang'
 import { Prisma } from '@prisma/client'
-import CodeMirror from '@uiw/react-codemirror'
+import dynamic from 'next/dynamic'
 import { FormEventHandler, useState, useTransition } from 'react'
 import ExportImport from './ExportImport'
 import { FileManager, useFiles, type XFile } from './FileManager'
@@ -32,6 +32,18 @@ export interface PasteEditorProps {
   ) => Promise<void>
   submitButtonText?: string
 }
+
+const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
+  ssr: false,
+  loading: () => (
+    <div className="bg-white dark:bg-[#282c34] h-[400px] text-[#888] font-[monospace] text-[13px]">
+      <div className="pl-4 pt-2 flex items-center gap-1">
+        <div>Loading editor…</div>
+        <span className="animate-breathing h-4.5 w-px bg-blue-500" />
+      </div>
+    </div>
+  ),
+})
 
 export default function PasteEditor({
   paste,

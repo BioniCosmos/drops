@@ -1,4 +1,5 @@
 import DecryptPaste from '@/app/view/[slug]/DecryptPaste'
+import { CodePreviewServer } from '@/components/CodePreview/server'
 import ExportImport from '@/components/ExportImport'
 import { FileManager } from '@/components/FileManager'
 import PasteStats from '@/components/PasteStats'
@@ -89,7 +90,12 @@ export default async function PastePage({ params }: PastePageProps) {
           <DecryptPaste
             initialContent={paste.content}
             language={paste.language}
-          />
+          >
+            <CodePreviewServer
+              content={paste.content}
+              language={paste.language}
+            />
+          </DecryptPaste>
           {paste.files.length > 0 && (
             <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
               <FileManager files={paste.files} readonly />

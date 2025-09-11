@@ -8,18 +8,28 @@ import { useState } from 'react'
 export default function DecryptPaste({
   initialContent,
   language,
+  children,
 }: {
   initialContent: string
   language: string
+  children: React.ReactNode
 }) {
+  const [useClient, setUseClient] = useState(false)
   const [content, setContent] = useState(initialContent)
   const clickHandler = useSecret(
-    (key) => setContent(decrypt(content, key)),
+    (key) => {
+      setContent(decrypt(content, key))
+      setUseClient(true)
+    },
     () => setContent(initialContent),
   )
   return (
     <div onClick={clickHandler}>
-      <CodePreviewClient content={content} language={language} />
+      {useClient ? (
+        <CodePreviewClient content={content} language={language} />
+      ) : (
+        children
+      )}
     </div>
   )
 }
