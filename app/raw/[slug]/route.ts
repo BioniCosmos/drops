@@ -3,14 +3,9 @@ import prisma from '@/lib/server/db'
 import mime from 'mime'
 import { NextRequest } from 'next/server'
 
-interface Context {
-  params: Promise<{ slug: string }>
-  searchParams: Promise<{ download: string }>
-}
-
-export async function GET(_: NextRequest, { params, searchParams }: Context) {
-  const { slug } = await params
-  const { download } = await searchParams
+export async function GET(req: NextRequest, ctx: RouteContext<'/raw/[slug]'>) {
+  const { slug } = await ctx.params
+  const download = req.nextUrl.searchParams.get('download') === 'true'
 
   // TODO: private paste
   const paste = await prisma.codePaste.findUnique({
