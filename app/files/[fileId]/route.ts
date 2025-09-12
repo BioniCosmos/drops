@@ -2,12 +2,11 @@ import { getCurrentSession } from '@/lib/server/auth'
 import prisma from '@/lib/server/db'
 import { NextRequest } from 'next/server'
 
-interface Context {
-  params: Promise<{ fileId: string }>
-}
-
-export async function GET(_: NextRequest, { params }: Context) {
-  const { fileId } = await params
+export async function GET(
+  _req: NextRequest,
+  ctx: RouteContext<'/files/[fileId]'>,
+) {
+  const { fileId } = await ctx.params
 
   const file = await prisma.pasteFile.findUnique({
     where: { id: fileId },
@@ -26,7 +25,8 @@ export async function GET(_: NextRequest, { params }: Context) {
     }
   }
 
-  return new Response(file.content, {
+  // TODO: check type details
+  return new Response(Buffer.from(file.content), {
     headers: {
       'Content-Type': file.mimeType,
       'Content-Disposition': `attachment; filename="${encodeURIComponent(

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 
+// TODO: improve the state management
 export function useSecret(decrypt: (input: string) => void, reset: () => void) {
   useEffect(() => {
     let input = ''
