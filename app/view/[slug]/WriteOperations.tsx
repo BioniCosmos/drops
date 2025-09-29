@@ -3,8 +3,10 @@
 import { claimPaste, deletePaste, verifyAnonymousPaste } from '@/app/actions'
 import DeleteButton from '@/components/DeleteButton'
 import { CodePaste, User } from '@prisma/client'
+import { Pen, UserPlus } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
+import Download from './Download'
 
 interface Props {
   paste: Omit<CodePaste, 'anonymousKey'>
@@ -44,21 +46,25 @@ export default function WriteOperations({ paste, user }: Props) {
   return (
     authorized && (
       <>
+        <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
+        <Download slug={paste.slug} />
         <Link
           href={`/edit/${paste.slug}`}
-          className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors inline-flex items-center gap-2"
         >
+          <Pen size={16} />
           Edit
         </Link>
         <DeleteButton
           action={deletePaste.bind(null, paste.slug, anonymousKey.current)}
-          className="px-4 py-2 text-sm rounded-lg"
+          className="w-full text-left px-4 py-2 text-sm rounded-none"
         />
         {showClaimButton && (
           <button
             onClick={handleClaim}
-            className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors inline-flex items-center gap-2"
           >
+            <UserPlus size={16} />
             Claim
           </button>
         )}

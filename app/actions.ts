@@ -7,6 +7,7 @@ import { getCurrentSession } from '@/lib/server/auth'
 import prisma from '@/lib/server/db'
 import { hash } from '@/lib/utils'
 import JSZip from 'jszip'
+import ky from 'ky'
 import { nanoid } from 'nanoid'
 import { revalidatePath } from 'next/cache'
 import { headers } from 'next/headers'
@@ -244,4 +245,56 @@ export async function exportPaste(slug: string): Promise<[Blob, string]> {
     )
   }
   return [await zip.generateAsync({ type: 'blob' }), `${paste.title}.zip`]
+}
+
+export async function uploadToDufs(
+  slug: string,
+  url: string,
+  username?: string,
+  password?: string,
+) {
+  const paste = await prisma.codePaste.findUnique({
+    where: { slug },
+    select: { content: true },
+  })
+  if (!paste) {
+    throw Error('Paste not found')
+  }
+  const auth = username &&
+    password && { Authorization: `Basic ${btoa(`${username}:${password}`)}` }
+  const response = await ky.put(url, {
+    body: paste.content,
+    headers: { ...auth },
+  })
+  if (!response.ok) {
+    throw Error(`Upload failed: ${response.status} ${response.statusText}`)
+  }
+}
+
+export async function downloadFromDufs(
+  slug: string,
+  anonymousKey: string,
+  url: string,
+  username?: string,
+  password?: string,
+) {
+  const { user } = await getCurrentSession()
+  const paste = await prisma.codePaste.findUnique({
+    where: { slug },
+    select: { id: true, authorId: true, anonymousKey: true },
+  })
+  if (!paste) {
+    throw Error('Paste not found')
+  }
+  if (paste.authorId !== user?.id && paste.anonymousKey !== anonymousKey) {
+    throw Error('Forbidden')
+  }
+  const auth = username &&
+    password && { Authorization: `Basic ${btoa(`${username}:${password}`)}` }
+  const content = await ky(url, { headers: { ...auth } }).text()
+  await prisma.codePaste.update({ where: { id: paste.id }, data: { content } })
+  revalidatePath(`/view/${slug}`)
+  revalidatePath(`/edit/${slug}`)
+  revalidatePath('/list')
+  revalidatePath('/admin')
 }

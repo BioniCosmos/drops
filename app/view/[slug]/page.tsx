@@ -1,15 +1,17 @@
 import DecryptPaste from '@/app/view/[slug]/DecryptPaste'
 import { CodePreviewServer } from '@/components/CodePreview/server'
-import ExportImport from '@/components/ExportImport'
 import { FileManager } from '@/components/FileManager'
 import PasteStats from '@/components/PasteStats'
+import { ExportMenuItem } from '@/components/port'
 import { getLangName } from '@/lib/lang'
 import { getCurrentSession } from '@/lib/server/auth'
 import prisma from '@/lib/server/db'
 import { format } from 'date-fns'
-import { Paperclip } from 'lucide-react'
+import { ExternalLink, Paperclip } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import Menu from './Menu'
+import Upload from './Upload'
 import WriteOperations from './WriteOperations'
 
 export interface PastePageProps {
@@ -70,21 +72,19 @@ export default async function PastePage({ params }: PastePageProps) {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Link
-                href="/"
-                className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-colors"
-              >
-                New
-              </Link>
-              <Link
-                href={`/raw/${paste.slug}`}
-                className="px-3 py-1.5 text-sm bg-green-100 text-green-700 rounded-md hover:bg-green-200 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800 transition-colors"
-                target="_blank"
-              >
-                Raw
-              </Link>
-              <ExportImport slug={paste.slug} />
-              <WriteOperations paste={paste} user={user} />
+              <Menu>
+                <Link
+                  href={`/raw/${paste.slug}`}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors inline-flex items-center gap-2"
+                  target="_blank"
+                >
+                  <ExternalLink size={16} />
+                  Raw
+                </Link>
+                <ExportMenuItem slug={paste.slug} />
+                <Upload slug={paste.slug} />
+                <WriteOperations paste={paste} user={user} />
+              </Menu>
             </div>
           </div>
           <DecryptPaste

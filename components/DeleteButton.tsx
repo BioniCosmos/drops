@@ -1,6 +1,7 @@
 'use client'
 
 import { clsx } from 'clsx'
+import { Trash2 } from 'lucide-react'
 import { MouseEventHandler, useTransition } from 'react'
 
 export interface DeleteButtonProps {
@@ -25,11 +26,12 @@ export default function DeleteButton({ action, className }: DeleteButtonProps) {
     <button
       disabled={pending}
       className={clsx(
-        'bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors',
+        'bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-2',
         className,
       )}
       onClick={handleDelete}
     >
+      <Trash2 size={16} />
       {pending ? 'Deleting...' : 'Delete'}
     </button>
   )

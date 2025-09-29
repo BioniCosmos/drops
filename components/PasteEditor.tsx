@@ -6,8 +6,8 @@ import { getLangFromExtension, lang, loadCodeMirrorLang } from '@/lib/lang'
 import { Prisma } from '@prisma/client'
 import dynamic from 'next/dynamic'
 import { FormEventHandler, useState, useTransition } from 'react'
-import ExportImport from './ExportImport'
 import { FileManager, useFiles, type XFile } from './FileManager'
+import { ExportButton, ImportButton } from './port'
 
 export interface PasteEditorProps {
   paste?: Prisma.CodePasteGetPayload<{
@@ -124,7 +124,10 @@ export default function PasteEditor({
         <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">
           Import/Export
         </h3>
-        <ExportImport slug={paste?.slug} onImport={handleImport} />
+        <div className="flex flex-wrap gap-2">
+          <ImportButton onImport={handleImport} />
+          {paste && <ExportButton slug={paste.slug} />}
+        </div>
       </div>
       <div>
         <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">
