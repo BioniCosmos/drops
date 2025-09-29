@@ -8,7 +8,7 @@ interface PaginationProps {
   currentPage: number
   totalCount: number
   pathname: string
-  searchParams: Record<string, string>
+  searchParams?: Record<string, string>
   pageSize?: number
   visibleItems?: number
   showFirstLast?: boolean
@@ -29,6 +29,9 @@ export function PaginationNavbar({
   const visiblePageItems = getPageItems(currentPage, totalPages, visibleItems)
 
   function createHref(page: number) {
+    if (!searchParams) {
+      return page === 1 ? pathname : `${pathname}/${page}`
+    }
     const newSearchParams = new URLSearchParams(searchParams)
     newSearchParams.set('page', page.toString())
     return `${pathname}?${newSearchParams.toString()}`

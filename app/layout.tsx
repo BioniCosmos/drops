@@ -1,19 +1,18 @@
 import ProgressBar from '@/components/ProgressBar'
-import { getCurrentSession } from '@/lib/server/auth'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import './globals.css'
+import User from './User'
 
 export const metadata: Metadata = {
   title: 'Drops',
   description: 'Share your code snippets instantly',
 }
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const { user } = await getCurrentSession()
   return (
     <html lang="en">
       <body className="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
@@ -33,31 +32,7 @@ export default async function RootLayout({
                 Browse Pastes
               </Link>
             </div>
-            <div className="flex items-center gap-4">
-              {user ? (
-                <>
-                  <Link
-                    href="/admin"
-                    className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-                  >
-                    My Pastes
-                  </Link>
-                  <a
-                    href="/logout"
-                    className="text-sm bg-gray-200 dark:bg-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    Logout
-                  </a>
-                </>
-              ) : (
-                <a
-                  href="/login/github"
-                  className="text-sm bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Login with GitHub
-                </a>
-              )}
-            </div>
+            <User />
           </nav>
         </header>
         <main className="grow">

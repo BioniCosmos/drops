@@ -3,15 +3,7 @@ import prisma from '@/lib/server/db'
 import { notFound } from 'next/navigation'
 import EditPaste from './EditPaste'
 
-export interface PastePageProps {
-  params: Promise<{ slug: string }>
-}
-
-export async function generateStaticParams() {
-  return prisma.codePaste.findMany()
-}
-
-export default async function PastePage({ params }: PastePageProps) {
+export default async function PastePage({ params }: PageProps<'/edit/[slug]'>) {
   const { slug } = await params
   const paste = await prisma.codePaste.findUnique({
     where: { slug },
